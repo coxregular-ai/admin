@@ -416,7 +416,10 @@ const restrictionFilters = ["DÍVIDAS", "DÍVIDAS ATIVA", "PROTESTOS", "CCF", "V
 function RestrictionsDebtsPanel({ debts, onSelect }) {
   const [activeFilter, setActiveFilter] = useState(null);
   const activeDebts = debts.filter((debt) => !["Quitada", "Removida", "Excluida"].includes(debt.status));
-  const hasDebts = activeDebts.length > 0;
+  const filteredDebts = activeFilter
+    ? activeDebts.filter((debt) => (debt.category || "DÍVIDAS") === activeFilter)
+    : activeDebts;
+  const hasFilteredDebts = filteredDebts.length > 0;
   const openDebtDetails = (debt) => {
     setActiveFilter(null);
     onSelect(debt);
@@ -424,7 +427,7 @@ function RestrictionsDebtsPanel({ debts, onSelect }) {
 
   return (
     <>
-      <section className={`panel restrictions-debts-panel ${hasDebts ? "has-debts" : ""}`}>
+      <section className={`panel restrictions-debts-panel ${activeDebts.length > 0 ? "has-debts" : ""}`}>
         <div className="panel-header red">RESTRICOES</div>
         <div className="restriction-actions">
           {restrictionFilters.map((filter) => (
@@ -440,13 +443,13 @@ function RestrictionsDebtsPanel({ debts, onSelect }) {
             <button type="button" className="modal-close" onClick={() => setActiveFilter(null)}>x</button>
             <span className="restriction-modal-eyebrow">RESTRICOES</span>
             <h2>{activeFilter}</h2>
-            {!hasDebts ? (
+            {!hasFilteredDebts ? (
               <div className="restriction-empty">
                 <strong>NADA CONSTA</strong>
               </div>
             ) : (
               <div className="restriction-popup-list">
-                {activeDebts.map((debt) => (
+                {filteredDebts.map((debt) => (
                   <button key={debt.id} type="button" onClick={() => openDebtDetails(debt)} className="restriction-popup-row">
                     <span>
                       <strong>{debt.title}</strong>
@@ -516,6 +519,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
   const credits = data.credits;
   const settings = data.settings || { logoUrl: "", platformName: "Scoore Admin" };
   const [newDebtsText, setNewDebtsText] = useState("");
+  const [newDebtCategory, setNewDebtCategory] = useState(restrictionFilters[0]);
   const [pendingAction, setPendingAction] = useState("");
 
   async function runAction(actionId, action) {
@@ -564,7 +568,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
       for (const title of lines) {
         const debt = await api(`/admin/profiles/${profileId}/debts`, {
           method: "POST",
-          body: JSON.stringify({ title, amount: "R$ 0,00", creditor: "", dueDate: "", status: "Aberta", details: "" })
+          body: JSON.stringify({ title, category: newDebtCategory, amount: "R$ 0,00", creditor: "", dueDate: "", status: "Aberta", details: "" })
         }, token);
         debts.push(debt);
       }
@@ -577,7 +581,15 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
 
   async function saveDebt(debt) {
     await runAction(`debt-${debt.id}`, async () => {
-      await api(`/admin/debts/${debt.id}`, { method: "PATCH", body: JSON.stringify(debt) }, token);
+      const savedDebt = await api(`/admin/debts/${debt.id}`, { method: "PATCH", body: JSON.stringify(debt) }, token);
+      setData((prev) => ({
+        ...prev,
+        debts: (prev.debts || []).map((item) => (item.id === savedDebt.id ? savedDebt : item))
+      }));
+      setPanelData((prev) => prev ? {
+        ...prev,
+        debts: (prev.debts || []).map((item) => (item.id === savedDebt.id ? savedDebt : item))
+      } : prev);
       toast("Divida atualizada");
     });
   }
@@ -742,11 +754,28 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
       {current === "debts" && (
         <div className="editor-stack">
           <div className="single-field-editor">
-            <TextArea
-              label="Dividas (uma linha por divida)"
-              value={newDebtsText}
-              onChange={setNewDebtsText}
-            />
+            <div className="debt-entry-grid">
+              <TextArea
+                label="Dividas (uma linha por divida)"
+                value={newDebtsText}
+                onChange={setNewDebtsText}
+              />
+              <div className="debt-category-picker">
+                <span>Tipo</span>
+                <div>
+                  {restrictionFilters.map((filter) => (
+                    <button
+                      key={filter}
+                      className={newDebtCategory === filter ? "active" : ""}
+                      type="button"
+                      onClick={() => setNewDebtCategory(filter)}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
             <div className="action-row">
               <button className={`primary-button ${isPending("addDebt") ? "action-busy" : ""}`} type="button" onClick={addDebt} disabled={disableActions}>
                 <BadgeDollarSign size={15} /> {isPending("addDebt") ? "Adicionando..." : "Adicionar dividas"}
@@ -762,6 +791,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
                 <div className="debt-editor" key={debt.id}>
                   <div className="form-grid">
                     <Field label="Titulo" value={debt.title} onChange={(value) => updateDebtItem(debt.id, { title: value })} />
+                    <SelectField label="Tipo" value={debt.category || restrictionFilters[0]} options={restrictionFilters} onChange={(value) => updateDebtItem(debt.id, { category: value })} />
                     <Field label="Valor" value={debt.amount} onChange={(value) => updateDebtItem(debt.id, { amount: value })} />
                     <Field label="Credor" value={debt.creditor} onChange={(value) => updateDebtItem(debt.id, { creditor: value })} />
                     <DateField label="Vencimento" value={debt.dueDate} onChange={(value) => updateDebtItem(debt.id, { dueDate: value })} />

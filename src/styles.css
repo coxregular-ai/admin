@@ -314,11 +314,52 @@ select {
 .single-field-editor {
   display: grid;
   gap: 10px;
-  max-width: 760px;
+  max-width: 980px;
 }
 
 .single-field-editor .field textarea {
   min-height: 150px;
+}
+
+.debt-entry-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(220px, 280px);
+  gap: 12px;
+  align-items: start;
+}
+
+.debt-category-picker {
+  display: grid;
+  gap: 6px;
+}
+
+.debt-category-picker > span {
+  color: #9fb3c8;
+  font-size: 11px;
+}
+
+.debt-category-picker > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.debt-category-picker button {
+  min-height: 34px;
+  border: 1px solid #31577c;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0c2543, #061225);
+  color: #f8fafc;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.debt-category-picker button:hover,
+.debt-category-picker button.active {
+  border-color: #0f62fe;
+  background: #0f62fe;
+  color: #fff;
 }
 
 .list-editor {
@@ -1273,6 +1314,10 @@ select {
 
   .credit-line {
     grid-template-columns: 1fr 76px;
+  }
+
+  .debt-entry-grid {
+    grid-template-columns: 1fr;
   }
 
   .credit-line .field:nth-child(3),
