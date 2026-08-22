@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BadgeDollarSign,
@@ -896,6 +896,27 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
   const [credentials, setCredentials] = useState({ login: "", pin: "", password: "" });
   const [resolving, setResolving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const closeTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setShowReasons(false);
+    setCredentialReason("");
+    setCredentials({ login: "", pin: "", password: "" });
+    setResolving(false);
+    setSuccessMessage("");
+
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, [debt?.id]);
+
   if (!debt) return null;
 
   async function resolve(reason, credentialPayload = null) {
@@ -909,7 +930,10 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
       setSuccessMessage(resolutionSuccessMessage);
       toast(resolutionSuccessMessage);
       onResolved(updatedDebt);
-      window.setTimeout(onClose, 1400);
+      closeTimerRef.current = window.setTimeout(() => {
+        closeTimerRef.current = null;
+        onClose();
+      }, 1400);
     } finally {
       setResolving(false);
     }
