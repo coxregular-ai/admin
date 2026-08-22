@@ -474,15 +474,15 @@ select {
 
 .person-head {
   display: grid;
-  grid-template-columns: 74px minmax(0, 1fr) auto;
+  grid-template-columns: 68px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: start;
   padding: 4px 10px 8px;
 }
 
 .avatar {
-  width: 66px;
-  height: 66px;
+  width: 58px;
+  height: 78px;
   border-radius: 4px;
   border: 2px solid #7cc4ff;
   display: grid;
@@ -1002,8 +1002,8 @@ select {
 }
 
 .profile-photo-preview {
-  width: 112px;
-  height: 112px;
+  width: 126px;
+  height: 168px;
   border: 1px dashed #355579;
   border-radius: 4px;
   background: #020817;

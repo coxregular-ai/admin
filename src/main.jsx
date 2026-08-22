@@ -156,15 +156,19 @@ function fileToProfilePhotoUrl(file) {
       const image = new Image();
       image.onerror = () => reject(new Error("Imagem invalida"));
       image.onload = () => {
-        const maxSide = 520;
-        const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-        const width = Math.max(1, Math.round(image.width * scale));
-        const height = Math.max(1, Math.round(image.height * scale));
+        const width = 390;
+        const height = 520;
+        const targetRatio = width / height;
+        const sourceRatio = image.width / image.height;
+        const sourceWidth = sourceRatio > targetRatio ? image.height * targetRatio : image.width;
+        const sourceHeight = sourceRatio > targetRatio ? image.height : image.width / targetRatio;
+        const sourceX = (image.width - sourceWidth) / 2;
+        const sourceY = (image.height - sourceHeight) / 2;
         const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
         const context = canvas.getContext("2d");
-        context.drawImage(image, 0, 0, width, height);
+        context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, width, height);
         resolve(canvas.toDataURL("image/jpeg", 0.86));
       };
       image.src = reader.result;
