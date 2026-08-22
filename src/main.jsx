@@ -66,6 +66,12 @@ const educationOptions = [
 const debtStatusOptions = ["Aberta", "Em negociacao", "Quitada", "Vencida", "Contestada"];
 const ratingOptions = ratingScale.map((item) => item.label);
 const resolutionReasons = ["Quitacao", "Acordo", "Erro cadastral", "Duplicidade"];
+const resolutionMessages = {
+  Quitacao: "Dívida quitada com sucesso",
+  Acordo: "Dívida resolvida por acordo",
+  "Erro cadastral": "Dívida excluída por erro cadastral",
+  Duplicidade: "Dívida excluída por duplicidade"
+};
 
 function toInputDate(value) {
   if (!value) return "";
@@ -811,6 +817,7 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
   const [credentialReason, setCredentialReason] = useState("");
   const [credentials, setCredentials] = useState({ login: "", pin: "", password: "" });
   const [resolving, setResolving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   if (!debt) return null;
 
   async function resolve(reason, credentialPayload = null) {
@@ -821,9 +828,11 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
         method: "POST",
         body: JSON.stringify({ reason, credentials: credentialPayload })
       }, token);
-      toast(reason === "Quitacao" ? "Divida quitada com sucesso" : "Registro atualizado com sucesso");
+      const message = resolutionMessages[reason] || "Dívida excluída";
+      setSuccessMessage(message);
+      toast(message);
       onResolved(updatedDebt);
-      onClose();
+      window.setTimeout(onClose, 1400);
     } finally {
       setResolving(false);
     }
@@ -838,7 +847,11 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
     <div className="modal-backdrop" onClick={onClose}>
       <article className={`modal ${credentialReason ? "credential-theme" : ""}`} onClick={(event) => event.stopPropagation()}>
         <button type="button" className="modal-close" onClick={onClose}>x</button>
-        {!credentialReason ? (
+        {successMessage ? (
+          <div className="resolution-success">
+            <strong>{successMessage}</strong>
+          </div>
+        ) : !credentialReason ? (
           <>
             <h2>{debt.title}</h2>
             <p><strong>Credor:</strong> {debt.creditor}</p>
@@ -914,6 +927,7 @@ function App() {
     if (!token) return;
     const panel = await api(`/panel/${profileId}`, {}, token);
     setData(panel);
+    setPanelData(panel);
   }
 
   function logout() {
@@ -958,10 +972,15 @@ function App() {
         toast={toast}
         onRefresh={refreshDraftOnly}
         onResolved={(updatedDebt) => {
+          const updateResolvedDebt = (prev) => ({
+            ...prev,
+            debts: (prev.debts || []).map((debt) => debt.id === updatedDebt.id ? updatedDebt : debt)
+          });
           setData((prev) => ({
             ...prev,
             debts: (prev.debts || []).map((debt) => debt.id === updatedDebt.id ? updatedDebt : debt)
           }));
+          setPanelData((prev) => prev ? updateResolvedDebt(prev) : prev);
         }}
         onClose={() => setSelectedDebt(null)}
       />

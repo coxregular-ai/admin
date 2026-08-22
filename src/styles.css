@@ -1111,6 +1111,19 @@ select {
   color: #7cc4ff;
 }
 
+.resolution-success {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.resolution-success strong {
+  color: #00c853;
+  font-size: clamp(20px, 3.2vw, 30px);
+  line-height: 1.15;
+}
+
 .modal-actions {
   display: flex;
   flex-wrap: wrap;
