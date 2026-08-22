@@ -74,16 +74,6 @@ const debtStatusOptions = ["Aberta", "Em negociacao", "Quitada", "Vencida", "Con
 const ratingOptions = ratingScale.map((item) => item.label);
 const resolutionReasons = ["Quitacao", "Acordo", "Erro cadastral", "Duplicidade"];
 
-const addressFields = [
-  { key: "street", label: "Logradouro" },
-  { key: "number", label: "Numero" },
-  { key: "complement", label: "Complemento" },
-  { key: "district", label: "Bairro" },
-  { key: "city", label: "Cidade" },
-  { key: "state", label: "UF" },
-  { key: "zipCode", label: "CEP" }
-];
-
 function toInputDate(value) {
   if (!value) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -255,6 +245,10 @@ function Header({ settings, onLogout }) {
   );
 }
 
+function addressLines(address = {}) {
+  return String(address.fullText || "").split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
 function DataPanel({ data }) {
   const rows = [
     ["Nome da Mae", data.profile.motherName],
@@ -296,16 +290,7 @@ function DataPanel({ data }) {
       </div>
       <InfoBox icon={Phone} title="TELEFONES" lines={data.contacts.phones} />
       <InfoBox icon={Mail} title="E-MAIL" lines={data.contacts.emails} />
-      <InfoBox
-        icon={MapPin}
-        title="ENDERECO"
-        lines={[
-          `${data.contacts.address.street}, ${data.contacts.address.number} - ${data.contacts.address.complement}`,
-          `Bairro: ${data.contacts.address.district}`,
-          `${data.contacts.address.city} - ${data.contacts.address.state}`,
-          `CEP: ${data.contacts.address.zipCode}`
-        ]}
-      />
+      <InfoBox icon={MapPin} title="ENDERECO" lines={addressLines(data.contacts.address)} />
     </section>
   );
 }
@@ -316,7 +301,7 @@ function InfoBox({ icon: Icon, title, lines }) {
       <Icon size={25} />
       <div>
         <h3>{title}</h3>
-        {lines.map((line) => <p key={line}>{line}</p>)}
+        {lines.map((line, index) => <p key={index}>{line}</p>)}
       </div>
     </div>
   );
@@ -632,11 +617,15 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
         </div>
       )}
       {current === "address" && (
-        <div className="form-grid">
-          {addressFields.map(({ key, label }) => (
-            <Field key={key} label={label} value={contacts.address[key]} onChange={(value) => updateAddressState(key, value)} />
-          ))}
-          <button className={`primary-button ${isPending("contacts") ? "action-busy" : ""}`} type="button" onClick={saveContacts} disabled={disableActions}><Save size={15} /> {isPending("contacts") ? "Salvando..." : "Salvar"}</button>
+        <div className="editor-stack">
+          <TextArea
+            label="Endereco completo (uma linha por quebra de linha)"
+            value={contacts.address.fullText}
+            onChange={(value) => updateAddressState("fullText", value)}
+          />
+          <div className="action-row">
+            <button className={`primary-button ${isPending("contacts") ? "action-busy" : ""}`} type="button" onClick={saveContacts} disabled={disableActions}><Save size={15} /> {isPending("contacts") ? "Salvando..." : "Salvar"}</button>
+          </div>
         </div>
       )}
       {current === "charts" && (
