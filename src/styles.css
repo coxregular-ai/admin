@@ -1093,3 +1093,11 @@ select {
     padding: 0 9px;
   }
 }
+
+.debt-editor {
+  border: 1px solid #24415f;
+  border-radius: 4px;
+  background: #050d1b;
+  padding: 10px;
+  margin-top: 8px;
+}

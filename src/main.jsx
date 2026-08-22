@@ -57,9 +57,32 @@ const ratingScale = [
 ];
 
 const statusOptions = ["ATIVO", "INATIVO", "PENDENTE", "BLOQUEADO"];
+const maritalStatusOptions = ["SOLTEIRO", "CASADO", "DIVORCIADO", "VIUVO", "UNIAO ESTAVEL", "SEPARADO"];
+const genderOptions = ["MASCULINO", "FEMININO", "OUTRO", "NAO INFORMADO"];
+const educationOptions = [
+  "FUNDAMENTAL INCOMPLETO",
+  "FUNDAMENTAL COMPLETO",
+  "MEDIO INCOMPLETO",
+  "MEDIO COMPLETO",
+  "SUPERIOR INCOMPLETO",
+  "SUPERIOR COMPLETO",
+  "POS-GRADUACAO",
+  "MESTRADO",
+  "DOUTORADO"
+];
 const debtStatusOptions = ["Aberta", "Em negociacao", "Quitada", "Vencida", "Contestada"];
 const ratingOptions = ratingScale.map((item) => item.label);
 const resolutionReasons = ["Quitacao", "Acordo", "Erro cadastral", "Duplicidade"];
+
+const addressFields = [
+  { key: "street", label: "Logradouro" },
+  { key: "number", label: "Numero" },
+  { key: "complement", label: "Complemento" },
+  { key: "district", label: "Bairro" },
+  { key: "city", label: "Cidade" },
+  { key: "state", label: "UF" },
+  { key: "zipCode", label: "CEP" }
+];
 
 function toInputDate(value) {
   if (!value) return "";
@@ -117,11 +140,14 @@ function DateField({ label, value, onChange }) {
 }
 
 function SelectField({ label, value, onChange, options }) {
+  const current = value ?? "";
+  // mantem na lista um valor ja gravado que nao esteja entre as opcoes padrao
+  const allOptions = current && !options.includes(current) ? [current, ...options] : options;
   return (
     <label className="field">
       <span>{label}</span>
-      <select value={value ?? ""} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      <select value={current} onChange={(event) => onChange(event.target.value)}>
+        {allOptions.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
   );
@@ -207,17 +233,18 @@ function Header({ settings, onLogout }) {
         <strong>Acesso restrito</strong>
       </div>
       <div className="header-credentials">
+        {/* nomes neutros + autoComplete new-password evitam o preenchimento automatico do navegador */}
         <label>
           <span>Credencial digital</span>
-          <input type="text" autoComplete="off" />
+          <input type="text" name="header_access_id" autoComplete="new-password" />
         </label>
         <label>
           <span>PIN</span>
-          <input type="password" autoComplete="off" />
+          <input type="password" name="header_access_pin" autoComplete="new-password" />
         </label>
         <label>
           <span>Senha</span>
-          <input type="password" autoComplete="off" />
+          <input type="password" name="header_access_proof" autoComplete="new-password" />
         </label>
         <button type="button" className="credentials-go">Ir</button>
       </div>
@@ -236,9 +263,9 @@ function DataPanel({ data }) {
     ["Naturalidade", `${data.profile.birthCity} - ${data.profile.birthState}`],
     ["Estado Civil", data.profile.maritalStatus],
     ["Sexo", data.profile.gender],
-    ["Titulo de Eleitor", "123456789012"],
+    ["Titulo de Eleitor", data.profile.voterId],
     ["RG", data.profile.rg],
-    ["Data de Expedicao", "10/08/2005"],
+    ["Data de Expedicao", data.profile.rgIssueDate],
     ["Orgao Emissor", data.profile.rgIssuer],
     ["Escolaridade", data.profile.education],
     ["Profissao", data.profile.profession],
@@ -484,6 +511,13 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
     });
   }
 
+  async function saveDebt(debt) {
+    await runAction(`debt-${debt.id}`, async () => {
+      await api(`/admin/debts/${debt.id}`, { method: "PATCH", body: JSON.stringify(debt) }, token);
+      toast("Divida atualizada");
+    });
+  }
+
   async function saveCredits() {
     await runAction("credits", async () => {
       await api(`/admin/profiles/${profileId}/credits`, { method: "PATCH", body: JSON.stringify(credits) }, token);
@@ -531,6 +565,12 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
     ...prev,
     contacts: { ...prev.contacts, [kind]: prev.contacts[kind].filter((_, itemIndex) => itemIndex !== index) }
   }));
+  const updateDebtItem = (debtId, patch) => {
+    setData((prev) => ({
+      ...prev,
+      debts: (prev.debts || []).map((debt) => (debt.id === debtId ? { ...debt, ...patch } : debt))
+    }));
+  };
   const updateCreditItem = (index, patch) => {
     const items = [...credits.items];
     items[index] = { ...items[index], ...patch };
@@ -564,9 +604,23 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
           <Field label="Nome" value={profile.fullName} onChange={(value) => updateProfileState("fullName", value)} />
           <Field label="CPF" value={profile.cpf} onChange={(value) => updateProfileState("cpf", value)} />
           <DateField label="Nascimento" value={profile.birthDate} onChange={(value) => updateProfileState("birthDate", value)} />
+          <Field label="Idade" value={profile.ageLabel} onChange={(value) => updateProfileState("ageLabel", value)} />
           <SelectField label="Status" value={profile.status} options={statusOptions} onChange={(value) => updateProfileState("status", value)} />
+          <Field label="Nome da Mae" value={profile.motherName} onChange={(value) => updateProfileState("motherName", value)} />
+          <Field label="Nome do Pai" value={profile.fatherName} onChange={(value) => updateProfileState("fatherName", value)} />
+          <Field label="Nacionalidade" value={profile.nationality} onChange={(value) => updateProfileState("nationality", value)} />
+          <Field label="Naturalidade (cidade)" value={profile.birthCity} onChange={(value) => updateProfileState("birthCity", value)} />
+          <Field label="Naturalidade (UF)" value={profile.birthState} onChange={(value) => updateProfileState("birthState", value)} />
+          <SelectField label="Estado Civil" value={profile.maritalStatus} options={maritalStatusOptions} onChange={(value) => updateProfileState("maritalStatus", value)} />
+          <SelectField label="Sexo" value={profile.gender} options={genderOptions} onChange={(value) => updateProfileState("gender", value)} />
+          <Field label="Titulo de Eleitor" value={profile.voterId} onChange={(value) => updateProfileState("voterId", value)} />
+          <Field label="RG" value={profile.rg} onChange={(value) => updateProfileState("rg", value)} />
+          <DateField label="Data de Expedicao" value={profile.rgIssueDate} onChange={(value) => updateProfileState("rgIssueDate", value)} />
+          <Field label="Orgao Emissor" value={profile.rgIssuer} onChange={(value) => updateProfileState("rgIssuer", value)} />
+          <Field label="UF do RG" value={profile.rgState} onChange={(value) => updateProfileState("rgState", value)} />
+          <SelectField label="Escolaridade" value={profile.education} options={educationOptions} onChange={(value) => updateProfileState("education", value)} />
           <Field label="Profissao" value={profile.profession} onChange={(value) => updateProfileState("profession", value)} />
-          <Field label="Renda" value={profile.income} onChange={(value) => updateProfileState("income", value)} />
+          <Field label="Renda presumida" value={profile.income} onChange={(value) => updateProfileState("income", value)} />
           <button className={`primary-button ${isPending("profile") ? "action-busy" : ""}`} type="button" onClick={saveProfile} disabled={disableActions}><Save size={15} /> {isPending("profile") ? "Salvando..." : "Salvar"}</button>
         </div>
       )}
@@ -579,8 +633,8 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
       )}
       {current === "address" && (
         <div className="form-grid">
-          {["street", "number", "complement", "district", "city", "state", "zipCode"].map((field) => (
-            <Field key={field} label={field} value={contacts.address[field]} onChange={(value) => updateAddressState(field, value)} />
+          {addressFields.map(({ key, label }) => (
+            <Field key={key} label={label} value={contacts.address[key]} onChange={(value) => updateAddressState(key, value)} />
           ))}
           <button className={`primary-button ${isPending("contacts") ? "action-busy" : ""}`} type="button" onClick={saveContacts} disabled={disableActions}><Save size={15} /> {isPending("contacts") ? "Salvando..." : "Salvar"}</button>
         </div>
@@ -588,6 +642,7 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
       {current === "charts" && (
         <div className="form-grid">
           <Field label="Score" type="number" value={indicators.score} onChange={(value) => updateIndicatorState("score", value)} />
+          <Field label="Score maximo" type="number" value={indicators.scoreMax} onChange={(value) => updateIndicatorState("scoreMax", value)} />
           <Field label="Texto do Score" value={indicators.scoreLabel} onChange={(value) => updateIndicatorState("scoreLabel", value)} />
           <SelectField label="Rating" value={indicators.rating} options={ratingOptions} onChange={(value) => updateIndicatorState("rating", value)} />
           <Field label="Texto do Rating" value={indicators.ratingLabel} onChange={(value) => updateIndicatorState("ratingLabel", value)} />
@@ -612,10 +667,27 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
               <p className="muted compact-muted">Nenhuma divida adicionada.</p>
             ) : (
               activeDebtsOnly(data.debts).map((debt) => (
-                <button key={debt.id} type="button" className="debt-row" onClick={() => onDebtSelect(debt)}>
-                  <span>{debt.title}</span>
-                  <strong>{debt.amount}</strong>
-                </button>
+                <div className="debt-editor" key={debt.id}>
+                  <div className="form-grid">
+                    <Field label="Titulo" value={debt.title} onChange={(value) => updateDebtItem(debt.id, { title: value })} />
+                    <Field label="Valor" value={debt.amount} onChange={(value) => updateDebtItem(debt.id, { amount: value })} />
+                    <Field label="Credor" value={debt.creditor} onChange={(value) => updateDebtItem(debt.id, { creditor: value })} />
+                    <DateField label="Vencimento" value={debt.dueDate} onChange={(value) => updateDebtItem(debt.id, { dueDate: value })} />
+                    <SelectField label="Status" value={debt.status} options={debtStatusOptions} onChange={(value) => updateDebtItem(debt.id, { status: value })} />
+                    <TextArea label="Detalhes do popup" value={debt.details} onChange={(value) => updateDebtItem(debt.id, { details: value })} />
+                  </div>
+                  <div className="action-row">
+                    <button className="secondary-button" type="button" onClick={() => onDebtSelect(debt)}>Abrir popup</button>
+                    <button
+                      className={`primary-button ${isPending(`debt-${debt.id}`) ? "action-busy" : ""}`}
+                      type="button"
+                      onClick={() => saveDebt(debt)}
+                      disabled={disableActions}
+                    >
+                      <Save size={15} /> {isPending(`debt-${debt.id}`) ? "Salvando..." : "Salvar divida"}
+                    </button>
+                  </div>
+                </div>
               ))
             )}
           </div>
