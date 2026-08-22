@@ -652,6 +652,7 @@ select {
   height: clamp(116px, 10.5vw, 146px);
   margin: 0 auto;
   position: relative;
+  transform: translateY(8px);
 }
 
 .gauge-svg {
@@ -747,6 +748,7 @@ select {
   place-items: end center;
   overflow-wrap: anywhere;
   text-shadow: 0 0 14px rgba(0, 200, 83, 0.18);
+  transform: translateY(-6px);
   width: 100%;
 }
 
@@ -755,7 +757,7 @@ select {
   justify-content: center;
   gap: clamp(5px, 0.5vw, 8px);
   padding: 0 10px;
-  transform: translateY(-13px);
+  transform: translateY(-19px);
   width: 100%;
 }
 
