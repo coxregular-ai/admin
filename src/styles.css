@@ -116,7 +116,7 @@ select {
 .app-header {
   grid-column: 1 / -1;
   grid-row: 1;
-  min-height: 98px;
+  min-height: 88px;
   border-bottom: 1px solid #24415f;
   background: #050d1b;
   display: flex;
@@ -127,7 +127,7 @@ select {
 
 .header-logo-slot {
   width: 224px;
-  height: 80px;
+  height: 72px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -173,6 +173,7 @@ select {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  object-position: center center;
   display: block;
 }
 
@@ -188,7 +189,7 @@ select {
 }
 
 .editor {
-  min-height: calc(100vh - 98px);
+  min-height: calc(100vh - 88px);
   background: #061225;
   padding: 18px 12px;
 }
@@ -591,9 +592,10 @@ select {
 
 .credits-content {
   display: grid;
-  grid-template-columns: minmax(136px, 170px) minmax(0, 1fr);
+  grid-template-columns: minmax(136px, 178px) minmax(0, 1fr);
   align-items: center;
-  padding: 0 10px 10px;
+  column-gap: 8px;
+  padding: 0 12px 10px;
 }
 
 .donut {
@@ -624,6 +626,7 @@ select {
 .legend {
   font-size: clamp(9px, 0.78vw, 11px);
   min-width: 0;
+  padding-left: 4px;
 }
 
 .legend p {
@@ -989,7 +992,7 @@ select {
 
   .header-logo-slot {
     width: 148px;
-    height: 58px;
+    height: 54px;
   }
 
   .logout-button {

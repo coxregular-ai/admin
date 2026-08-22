@@ -32,7 +32,6 @@ const menuItems = [
   { id: "charts", label: "Graficos", icon: BarChart3 },
   { id: "debts", label: "Dividas", icon: ShieldAlert },
   { id: "credits", label: "Creditos", icon: CreditCard },
-  { id: "access", label: "Acesso", icon: KeyRound },
   { id: "settings", label: "Configuracao", icon: Settings }
 ];
 
@@ -283,6 +282,7 @@ function ScorePanel({ indicators }) {
   const scorePercent = Math.max(0, Math.min(100, (indicators.score / indicators.scoreMax) * 100));
   const scoreAngle = Math.max(4, Math.min(180, scorePercent * 1.8));
   const currentRatingIndex = ratingScale.findIndex((item) => item.label === indicators.rating);
+  const currentRating = ratingScale[currentRatingIndex] || ratingScale[ratingScale.length - 1];
   return (
     <section className="panel score-panel">
       <div className="score-box">
@@ -297,7 +297,7 @@ function ScorePanel({ indicators }) {
       </div>
         <div className="rating-box">
         <div className="panel-header centered">RATING</div>
-        <div className="rating-value">{indicators.rating}</div>
+        <div className="rating-value" style={{ color: currentRating.color }}>{indicators.rating}</div>
         <div className="rating-bars">
           {ratingScale.map((item, index) => (
             <div key={item.label} className={index === currentRatingIndex ? "rating-active" : ""}>
@@ -306,7 +306,7 @@ function ScorePanel({ indicators }) {
             </div>
           ))}
         </div>
-        <p className="green-label">{indicators.ratingLabel}</p>
+        <p className="green-label" style={{ color: currentRating.color }}>{indicators.ratingLabel}</p>
       </div>
     </section>
   );
@@ -422,7 +422,6 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
   const credits = data.credits;
   const settings = data.settings || { logoUrl: "", platformName: "Scoore Admin" };
   const [newDebt, setNewDebt] = useState({ title: "", amount: "", creditor: "", dueDate: "", status: "Aberta", details: "" });
-  const [access, setAccess] = useState({ login: "", password: "" });
 
   async function saveProfile() {
     await api(`/admin/profiles/${profileId}`, { method: "PATCH", body: JSON.stringify(profile) }, token);
@@ -449,12 +448,6 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
   async function saveCredits() {
     await api(`/admin/profiles/${profileId}/credits`, { method: "PATCH", body: JSON.stringify(credits) }, token);
     toast("Creditos salvos");
-  }
-
-  async function simulateRemoval(event) {
-    event.preventDefault();
-    const result = await api(`/admin/profiles/${profileId}/simulate-removal`, { method: "POST", body: JSON.stringify(access) }, token);
-    toast(result.message);
   }
 
   async function saveSettings() {
@@ -607,13 +600,6 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
             <button className="primary-button" type="button" onClick={saveCredits}><Save size={15} /> Salvar creditos</button>
           </div>
         </div>
-      )}
-      {current === "access" && (
-        <form className="form-grid" onSubmit={simulateRemoval}>
-          <Field label="Login" value={access.login} onChange={(value) => setAccess((prev) => ({ ...prev, login: value }))} />
-          <Field label="Senha" type="password" value={access.password} onChange={(value) => setAccess((prev) => ({ ...prev, password: value }))} />
-          <button className="danger-button" type="submit"><Trash2 size={15} /> Simular exclusao</button>
-        </form>
       )}
       {current === "settings" && (
         <div className="editor-stack settings-editor">
