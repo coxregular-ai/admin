@@ -880,6 +880,10 @@ select {
   white-space: nowrap;
 }
 
+.restrictions-header span {
+  color: #fff;
+}
+
 .restrictions-debts-panel.has-debts .restrictions-header strong {
   color: #ff2d2d;
 }
