@@ -627,6 +627,8 @@ select {
 
 .score-box {
   border-right: 1px solid #24415f;
+  position: relative;
+  padding-bottom: 30px;
 }
 
 .rating-box {
@@ -634,7 +636,8 @@ select {
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   align-items: center;
   justify-items: center;
-  padding-bottom: 12px;
+  position: relative;
+  padding-bottom: 30px;
 }
 
 .gauge {
@@ -710,16 +713,16 @@ select {
 .green-label {
   color: #00c853;
   font-size: 10px;
-  margin: 6px 0 0;
+  margin: 0;
   text-align: center;
 }
 
-.score-status-label {
-  margin-top: -2px;
-}
-
+.score-status-label,
 .rating-status-label {
-  margin-top: 8px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
 }
 
 .rating-value {
