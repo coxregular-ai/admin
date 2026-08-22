@@ -456,7 +456,7 @@ function RestrictionsDebtsPanel({ debts, onSelect }) {
       <section className={`panel restrictions-debts-panel ${activeDebts.length > 0 ? "has-debts" : ""}`}>
         <div className="panel-header red restrictions-header">
           <span>Restrições</span>
-          <strong>{activeDebts.length > 0 ? `CONSTA ${activeDebts.length}` : "NADA CONSTA"}</strong>
+          <strong>{activeDebts.length > 0 ? "CONSTA" : "NADA CONSTA"}</strong>
         </div>
         <div className="restriction-actions">
           {restrictionFilters.map((filter) => (
