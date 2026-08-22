@@ -307,7 +307,7 @@ function DataPanel({ data, onRefresh, refreshing }) {
     ["Profissao", data.profile.profession],
     // celula vazia para empurrar a renda presumida para a coluna da direita
     [null, null],
-    ["Renda presumida", data.profile.income]
+    ["Renda Presumida", data.profile.income]
   ];
 
   return (
@@ -495,7 +495,7 @@ function Preview({ data, onRefresh, refreshing, onDebtSelect }) {
   return (
     <div className={`preview-wrap ${refreshing ? "is-refreshing" : ""}`}>
       <div className="scoreboard">
-        {refreshing && <div className="refresh-overlay">Atualizando painel...</div>}
+        {refreshing && <div className="refresh-overlay">Atualizando sistema</div>}
         <DataPanel data={data} onRefresh={onRefresh} refreshing={refreshing} />
         <div className="right-stack">
           <ScorePanel indicators={data.indicators} />
@@ -774,7 +774,7 @@ function Editor({
           <Field label="UF do RG" value={profile.rgState} onChange={(value) => updateProfileState("rgState", value)} />
           <SelectField label="Escolaridade" value={profile.education} options={educationOptions} onChange={(value) => updateProfileState("education", value)} />
           <Field label="Profissao" value={profile.profession} onChange={(value) => updateProfileState("profession", value)} />
-          <Field label="Renda presumida" value={profile.income} onChange={(value) => updateProfileState("income", value)} />
+          <Field label="Renda Presumida" value={profile.income} onChange={(value) => updateProfileState("income", value)} />
           <button className={`primary-button ${isPending("profile") ? "action-busy" : ""}`} type="button" onClick={saveProfile} disabled={disableActions}><Save size={15} /> {isPending("profile") ? "Salvando..." : "Salvar"}</button>
         </div>
       )}
