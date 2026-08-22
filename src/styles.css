@@ -860,6 +860,25 @@ select {
   padding-bottom: 10px;
 }
 
+.restrictions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.restrictions-header strong {
+  color: #00c853;
+  font-size: clamp(12px, 1vw, 15px);
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.restrictions-debts-panel.has-debts .restrictions-header strong {
+  color: #ff2d2d;
+}
+
 .restriction-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
