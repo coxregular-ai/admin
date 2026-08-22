@@ -39,13 +39,6 @@ function moneyColor(index) {
   return ["#1185ff", "#00b85c", "#ffcc19", "#8f44c7", "#ff4d4d"][index % 5];
 }
 
-const scoreBandStops = [
-  "#ff2323 0deg 58deg",
-  "#ffd21a 58deg 121deg",
-  "#22d15c 121deg 180deg",
-  "transparent 180deg 360deg"
-].join(", ");
-
 const ratingScale = [
   { label: "AAA", color: "#00c853" },
   { label: "AA", color: "#39d353" },
@@ -108,13 +101,16 @@ async function api(path, options = {}, token) {
   return body;
 }
 
-function Field({ label, value, onChange, type = "text", autoComplete, name }) {
+function Field({ label, value, onChange, type = "text", autoComplete, name, min, max, readOnly }) {
   return (
     <label className="field">
       <span>{label}</span>
       <input
         type={type}
         name={name}
+        min={min}
+        max={max}
+        readOnly={readOnly}
         autoComplete={autoComplete}
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value)}
@@ -272,7 +268,9 @@ function DataPanel({ data }) {
     <section className="panel data-panel">
       <div className="panel-header">DADOS CADASTRAIS</div>
       <div className="person-head">
-        <div className="avatar"><CircleUserRound size={42} /></div>
+        <div className="avatar">
+          {data.profile.photoUrl ? <img src={data.profile.photoUrl} alt="Foto do usuario" /> : <CircleUserRound size={42} />}
+        </div>
         <div>
           <h2>{data.profile.fullName}</h2>
           <p>CPF: {data.profile.cpf}</p>
@@ -308,21 +306,26 @@ function InfoBox({ icon: Icon, title, lines }) {
 }
 
 function ScorePanel({ indicators }) {
-  const scorePercent = Math.max(0, Math.min(100, (indicators.score / indicators.scoreMax) * 100));
-  const scoreAngle = Math.max(4, Math.min(180, scorePercent * 1.8));
+  const scoreMax = 1000;
+  const score = Math.max(0, Math.min(scoreMax, Number(indicators.score || 0)));
   const currentRatingIndex = ratingScale.findIndex((item) => item.label === indicators.rating);
   const currentRating = ratingScale[currentRatingIndex] || ratingScale[ratingScale.length - 1];
   return (
     <section className="panel score-panel">
       <div className="score-box">
         <div className="panel-header centered">SCORE</div>
-        <div className="gauge" style={{ "--score-bands": scoreBandStops, "--score-angle": `${scoreAngle}deg` }}>
+        <div className="gauge">
+          <svg className="gauge-svg" viewBox="0 0 220 132" aria-hidden="true" focusable="false">
+            <path className="gauge-segment gauge-red" d="M 20 112 A 90 90 0 0 1 63 35" />
+            <path className="gauge-segment gauge-yellow" d="M 70 31 A 90 90 0 0 1 150 31" />
+            <path className="gauge-segment gauge-green" d="M 157 35 A 90 90 0 0 1 200 112" />
+          </svg>
           <div className="gauge-inner">
-            <strong>{indicators.score}</strong>
-            <span>de {indicators.scoreMax}</span>
+            <strong>{score}</strong>
+            <span>de {scoreMax}</span>
           </div>
         </div>
-        <p className="green-label">{indicators.scoreLabel}</p>
+        <p className="green-label score-status-label">{indicators.scoreLabel}</p>
       </div>
         <div className="rating-box">
         <div className="panel-header centered">RATING</div>
@@ -335,7 +338,7 @@ function ScorePanel({ indicators }) {
             </div>
           ))}
         </div>
-        <p className="green-label" style={{ color: currentRating.color }}>{indicators.ratingLabel}</p>
+        <p className="green-label rating-status-label" style={{ color: currentRating.color }}>{indicators.ratingLabel}</p>
       </div>
     </section>
   );
@@ -373,28 +376,56 @@ function CreditsPanel({ credits }) {
   );
 }
 
+const restrictionFilters = ["DÍVIDAS", "DÍVIDAS ATIVA", "PROTESTOS", "CCF", "VENCIDOS", "PREJUÍZOS"];
+
 function RestrictionsDebtsPanel({ debts, onSelect }) {
+  const [activeFilter, setActiveFilter] = useState(null);
   const activeDebts = debts.filter((debt) => !["Quitada", "Removida", "Excluida"].includes(debt.status));
   const hasDebts = activeDebts.length > 0;
+  const openDebtDetails = (debt) => {
+    setActiveFilter(null);
+    onSelect(debt);
+  };
+
   return (
-    <section className={`panel restrictions-debts-panel ${hasDebts ? "has-debts" : ""}`}>
-      <div className="panel-header red">RESTRICOES</div>
-      {!hasDebts ? (
-        <strong className="nothing-found">NADA CONSTA</strong>
-      ) : (
-        <>
-          <strong className="found-debts">CONSTA</strong>
-          <div className="debt-list">
-            {activeDebts.map((debt) => (
-              <button key={debt.id} type="button" onClick={() => onSelect(debt)} className="debt-row">
-                <span>{debt.title}</span>
-                <strong>{debt.amount}</strong>
-              </button>
-            ))}
-          </div>
-        </>
+    <>
+      <section className={`panel restrictions-debts-panel ${hasDebts ? "has-debts" : ""}`}>
+        <div className="panel-header red">RESTRICOES</div>
+        <div className="restriction-actions">
+          {restrictionFilters.map((filter) => (
+            <button key={filter} type="button" onClick={() => setActiveFilter(filter)}>
+              {filter}
+            </button>
+          ))}
+        </div>
+      </section>
+      {activeFilter && (
+        <div className="modal-backdrop" onClick={() => setActiveFilter(null)}>
+          <article className="modal restriction-modal" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-close" onClick={() => setActiveFilter(null)}>x</button>
+            <span className="restriction-modal-eyebrow">RESTRICOES</span>
+            <h2>{activeFilter}</h2>
+            {!hasDebts ? (
+              <div className="restriction-empty">
+                <strong>NADA CONSTA</strong>
+              </div>
+            ) : (
+              <div className="restriction-popup-list">
+                {activeDebts.map((debt) => (
+                  <button key={debt.id} type="button" onClick={() => openDebtDetails(debt)} className="restriction-popup-row">
+                    <span>
+                      <strong>{debt.title}</strong>
+                      <small>{debt.creditor || "Credor nao informado"} {debt.dueDate ? `- ${debt.dueDate}` : ""}</small>
+                    </span>
+                    <em>{debt.amount}</em>
+                  </button>
+                ))}
+              </div>
+            )}
+          </article>
+        </div>
       )}
-    </section>
+    </>
   );
 }
 
@@ -443,7 +474,7 @@ function activeDebtsOnly(debts = []) {
   return debts.filter((debt) => !["Quitada", "Removida", "Excluida"].includes(debt.status));
 }
 
-function Editor({ current, data, setData, token, refresh, toast, onDebtSelect }) {
+function Editor({ current, data, setData, setPanelData, token, refresh, toast, onDebtSelect }) {
   const profile = data.profile;
   const contacts = data.contacts;
   const indicators = data.indicators;
@@ -467,7 +498,8 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
 
   async function saveProfile() {
     await runAction("profile", async () => {
-      await api(`/admin/profiles/${profileId}`, { method: "PATCH", body: JSON.stringify(profile) }, token);
+      const savedProfile = await api(`/admin/profiles/${profileId}`, { method: "PATCH", body: JSON.stringify(profile) }, token);
+      setPanelData((prev) => prev ? { ...prev, profile: { ...prev.profile, ...savedProfile } } : prev);
       toast("Dados cadastrais salvos");
     });
   }
@@ -481,7 +513,7 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
 
   async function saveIndicators() {
     await runAction("indicators", async () => {
-      await api(`/admin/profiles/${profileId}/indicators`, { method: "PATCH", body: JSON.stringify(indicators) }, token);
+      await api(`/admin/profiles/${profileId}/indicators`, { method: "PATCH", body: JSON.stringify({ ...indicators, scoreMax: 1000 }) }, token);
       toast("Graficos salvos");
     });
   }
@@ -528,11 +560,22 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
     reader.readAsDataURL(file);
   }
 
+  function uploadProfilePhoto(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const photoUrl = reader.result;
+      setData((prev) => ({ ...prev, profile: { ...prev.profile, photoUrl } }));
+      setPanelData((prev) => prev ? { ...prev, profile: { ...prev.profile, photoUrl } } : prev);
+    };
+    reader.readAsDataURL(file);
+  }
+
   const updateProfileState = (field, value) => setData((prev) => ({ ...prev, profile: { ...prev.profile, [field]: value } }));
   const updateContactsState = (field, value) => setData((prev) => ({ ...prev, contacts: { ...prev.contacts, [field]: value } }));
   const updateAddressState = (field, value) => setData((prev) => ({ ...prev, contacts: { ...prev.contacts, address: { ...prev.contacts.address, [field]: value } } }));
   const updateIndicatorState = (field, value) => setData((prev) => {
-    const nextValue = field === "score" ? Number(value) : value;
+    const nextValue = field === "score" ? Math.max(0, Math.min(1000, Number(value || 0))) : value;
     const nextIndicators = { ...prev.indicators, [field]: nextValue };
     if (field === "rating") nextIndicators.ratingLabel = ["AAA", "AAAA", "AAAAA"].includes(nextValue) ? "EXCELENTE" : nextValue === "AA" ? "MUITO BOM" : nextValue === "A" ? "BOM" : "ATENCAO";
     return { ...prev, indicators: nextIndicators };
@@ -585,6 +628,13 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
       <div className="editor-title">{menuItems.find((item) => item.id === current)?.label}</div>
       {current === "registration" && (
         <div className="form-grid">
+          <label className="profile-photo-uploader">
+            <span>Foto do usuario</span>
+            <div className="profile-photo-preview">
+              {profile.photoUrl ? <img src={profile.photoUrl} alt="Foto enviada" /> : <CircleUserRound size={34} />}
+            </div>
+            <input type="file" accept="image/*" onChange={(event) => uploadProfilePhoto(event.target.files?.[0])} />
+          </label>
           <Field label="Nome" value={profile.fullName} onChange={(value) => updateProfileState("fullName", value)} />
           <Field label="CPF" value={profile.cpf} onChange={(value) => updateProfileState("cpf", value)} />
           <DateField label="Nascimento" value={profile.birthDate} onChange={(value) => updateProfileState("birthDate", value)} />
@@ -629,8 +679,8 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
       )}
       {current === "charts" && (
         <div className="form-grid">
-          <Field label="Score" type="number" value={indicators.score} onChange={(value) => updateIndicatorState("score", value)} />
-          <Field label="Score maximo" type="number" value={indicators.scoreMax} onChange={(value) => updateIndicatorState("scoreMax", value)} />
+          <Field label="Score" type="number" min="0" max="1000" value={indicators.score} onChange={(value) => updateIndicatorState("score", value)} />
+          <Field label="Score maximo" type="number" value={1000} readOnly onChange={() => {}} />
           <Field label="Texto do Score" value={indicators.scoreLabel} onChange={(value) => updateIndicatorState("scoreLabel", value)} />
           <SelectField label="Rating" value={indicators.rating} options={ratingOptions} onChange={(value) => updateIndicatorState("rating", value)} />
           <Field label="Texto do Rating" value={indicators.ratingLabel} onChange={(value) => updateIndicatorState("ratingLabel", value)} />
@@ -866,7 +916,7 @@ function App() {
         {current === "panel" ? (
           <Preview data={panelData} onRefresh={refresh} refreshing={refreshing} onDebtSelect={setSelectedDebt} />
         ) : (
-          <Editor current={current} data={data} setData={setData} token={token} refresh={refresh} toast={toast} onDebtSelect={setSelectedDebt} />
+          <Editor current={current} data={data} setData={setData} setPanelData={setPanelData} token={token} refresh={refresh} toast={toast} onDebtSelect={setSelectedDebt} />
         )}
       </div>
       {toastMessage && <div className="toast">{toastMessage}</div>}
