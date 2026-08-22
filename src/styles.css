@@ -983,6 +983,7 @@ select {
 
 .restriction-popup-row span strong {
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .restriction-popup-row small,
@@ -1057,6 +1058,11 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.debt-content-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .debt-summary-row span {

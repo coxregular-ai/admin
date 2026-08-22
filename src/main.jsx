@@ -410,9 +410,19 @@ function CreditsPanel({ credits }) {
 
 const restrictionFilters = ["DÍVIDAS", "DÍVIDAS ATIVA", "PROTESTOS", "CCF", "VENCIDOS", "PREJUÍZOS"];
 
+const inactiveDebtStatuses = ["Quitada", "Removida", "Excluida"];
+
+function debtContent(debt = {}) {
+  return String(debt.content || debt.details || debt.title || "").trim();
+}
+
+function debtSummary(debt = {}) {
+  return debtContent(debt).split("\n").map((line) => line.trim()).find(Boolean) || "Restricao";
+}
+
 function RestrictionsDebtsPanel({ debts, onSelect }) {
   const [activeFilter, setActiveFilter] = useState(null);
-  const activeDebts = debts.filter((debt) => !["Quitada", "Removida", "Excluida"].includes(debt.status));
+  const activeDebts = debts.filter((debt) => !inactiveDebtStatuses.includes(debt.status));
   const filteredDebts = activeFilter
     ? activeDebts.filter((debt) => (debt.category || "DÍVIDAS") === activeFilter)
     : activeDebts;
@@ -449,7 +459,7 @@ function RestrictionsDebtsPanel({ debts, onSelect }) {
                 {filteredDebts.map((debt) => (
                   <button key={debt.id} type="button" onClick={() => openDebtDetails(debt)} className="restriction-popup-row">
                     <span>
-                      <strong>{debt.title}</strong>
+                      <strong>{debtContent(debt)}</strong>
                     </span>
                   </button>
                 ))}
@@ -504,7 +514,7 @@ function ContactListEditor({ title, kind, type, values, onChange, onAdd, onRemov
 }
 
 function activeDebtsOnly(debts = []) {
-  return debts.filter((debt) => !["Quitada", "Removida", "Excluida"].includes(debt.status));
+  return debts.filter((debt) => !inactiveDebtStatuses.includes(debt.status));
 }
 
 function Editor({ current, data, setData, setPanelData, token, refresh, toast, onDebtSelect }) {
@@ -556,23 +566,27 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
 
   async function addDebt() {
     await runAction("addDebt", async () => {
-      const lines = newDebtsText.split("\n").map((line) => line.trim()).filter(Boolean);
-      if (lines.length === 0) {
+      const content = newDebtsText.trim();
+      if (!content) {
         toast("Informe ao menos uma divida");
         return;
       }
-      const debts = [];
-      for (const title of lines) {
-        const debt = await api(`/admin/profiles/${profileId}/debts`, {
-          method: "POST",
-          body: JSON.stringify({ title, category: newDebtCategory, amount: "", dueDate: "", status: "Aberta", details: "" })
-        }, token);
-        debts.push(debt);
-      }
-      setData((prev) => ({ ...prev, debts: [...debts, ...(prev.debts || [])] }));
-      setPanelData((prev) => prev ? { ...prev, debts: [...debts, ...(prev.debts || [])] } : prev);
+      const debt = await api(`/admin/profiles/${profileId}/debts`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: debtSummary({ content }),
+          content,
+          category: newDebtCategory,
+          amount: "",
+          dueDate: "",
+          status: "Aberta",
+          details: content
+        })
+      }, token);
+      setData((prev) => ({ ...prev, debts: [debt, ...(prev.debts || [])] }));
+      setPanelData((prev) => prev ? { ...prev, debts: [debt, ...(prev.debts || [])] } : prev);
       setNewDebtsText("");
-      toast(debts.length === 1 ? "Divida adicionada" : "Dividas adicionadas");
+      toast("Divida adicionada");
     });
   }
 
@@ -753,7 +767,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
           <div className="single-field-editor">
             <div className="debt-entry-grid">
               <TextArea
-                label="Dividas (uma linha por divida)"
+                label="Conteudo da restricao"
                 value={newDebtsText}
                 onChange={setNewDebtsText}
               />
@@ -769,7 +783,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
             </div>
             <div className="action-row">
               <button className={`primary-button ${isPending("addDebt") ? "action-busy" : ""}`} type="button" onClick={addDebt} disabled={disableActions}>
-                <BadgeDollarSign size={15} /> {isPending("addDebt") ? "Adicionando..." : "Adicionar dividas"}
+                <BadgeDollarSign size={15} /> {isPending("addDebt") ? "Adicionando..." : "Adicionar restricao"}
               </button>
             </div>
           </div>
@@ -781,7 +795,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
               activeDebtsOnly(data.debts).map((debt) => (
                 <div className="debt-summary-row" key={debt.id}>
                   <div>
-                    <strong>{debt.title}</strong>
+                    <strong>{debtSummary(debt)}</strong>
                     <span>{debt.category || restrictionFilters[0]} · {debt.status || "Aberta"}</span>
                   </div>
                   <div className="debt-summary-actions">
@@ -807,11 +821,13 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
             <button type="button" className="modal-close" onClick={() => setEditingDebtId("")}>x</button>
             <h2>Editar divida</h2>
             <div className="form-grid">
-              <Field label="Titulo" value={editingDebt.title} onChange={(value) => updateDebtItem(editingDebt.id, { title: value })} />
+              <TextArea
+                label="Conteudo da restricao"
+                value={debtContent(editingDebt)}
+                onChange={(value) => updateDebtItem(editingDebt.id, { content: value, details: value, title: debtSummary({ content: value }) })}
+              />
               <SelectField label="Tipo" value={editingDebt.category || restrictionFilters[0]} options={restrictionFilters} onChange={(value) => updateDebtItem(editingDebt.id, { category: value })} />
-              <DateField label="Vencimento" value={editingDebt.dueDate} onChange={(value) => updateDebtItem(editingDebt.id, { dueDate: value })} />
               <SelectField label="Status" value={editingDebt.status} options={debtStatusOptions} onChange={(value) => updateDebtItem(editingDebt.id, { status: value })} />
-              <TextArea label="Detalhes do popup" value={editingDebt.details} onChange={(value) => updateDebtItem(editingDebt.id, { details: value })} />
             </div>
             <div className="modal-actions">
               <button className="secondary-button" type="button" onClick={() => setEditingDebtId("")}>Cancelar</button>
@@ -913,10 +929,8 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
           </div>
         ) : !credentialReason ? (
           <>
-            <h2>{debt.title}</h2>
-            <p><strong>Vencimento:</strong> {debt.dueDate}</p>
-            <p><strong>Status:</strong> {debt.status}</p>
-            <p>{debt.details}</p>
+            <h2>{debt.category || "Restricao"}</h2>
+            <p className="debt-content-text">{debtContent(debt)}</p>
             <div className="modal-actions">
               <button className="primary-button" type="button" onClick={onRefresh}><RefreshCw size={15} /> Atualizar</button>
               <button className="danger-button" type="button" onClick={() => setShowReasons((current) => !current)}>Excluir</button>
