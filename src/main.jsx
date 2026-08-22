@@ -299,7 +299,7 @@ function DataPanel({ data }) {
 
   return (
     <section className="panel data-panel">
-      <div className="panel-header">DADOS CADASTRAIS</div>
+      <div className="panel-header">Dados Cadastrais</div>
       <div className="person-head">
         <div className="avatar">
           {data.profile.photoUrl ? <img src={data.profile.photoUrl} alt="Foto do usuario" /> : <CircleUserRound size={42} />}
@@ -319,9 +319,9 @@ function DataPanel({ data }) {
           </React.Fragment>
         ))}
       </div>
-      <InfoBox icon={Phone} title="TELEFONES" lines={data.contacts.phones} />
-      <InfoBox icon={Mail} title="E-MAIL" lines={data.contacts.emails} />
-      <InfoBox icon={MapPin} title="ENDERECO" lines={addressLines(data.contacts.address)} />
+      <InfoBox icon={Phone} title="Telefones" lines={data.contacts.phones} />
+      <InfoBox icon={Mail} title="E-mail" lines={data.contacts.emails} />
+      <InfoBox icon={MapPin} title="Endereço" lines={addressLines(data.contacts.address)} />
     </section>
   );
 }
@@ -346,7 +346,7 @@ function ScorePanel({ indicators }) {
   return (
     <section className="panel score-panel">
       <div className="score-box">
-        <div className="panel-header centered">SCORE</div>
+        <div className="panel-header centered">Score</div>
         <div className="gauge">
           <svg className="gauge-svg" viewBox="0 0 220 132" aria-hidden="true" focusable="false">
             <path className="gauge-segment gauge-red" d="M 20 112 A 90 90 0 0 1 63 35" />
@@ -361,7 +361,7 @@ function ScorePanel({ indicators }) {
         <p className="green-label score-status-label">{indicators.scoreLabel}</p>
       </div>
         <div className="rating-box">
-        <div className="panel-header centered">RATING</div>
+        <div className="panel-header centered">Rating</div>
         <div className="rating-value" style={{ color: currentRating.color }}>{indicators.rating}</div>
         <div className="rating-bars">
           {ratingScale.map((item, index) => (
@@ -391,7 +391,7 @@ function CreditsPanel({ credits }) {
 
   return (
     <section className="panel credits-panel">
-      <div className="panel-header">CREDITOS</div>
+      <div className="panel-header">Créditos</div>
       <div className="credits-content">
         <div className="donut" style={{ background: `conic-gradient(${gradient || "#1185ff 0 25%, #00b85c 25% 50%, #ffcc19 50% 75%, #8f44c7 75% 100%"})` }}>
           <div><strong>{credits.total}</strong></div>
@@ -436,7 +436,7 @@ function RestrictionsDebtsPanel({ debts, onSelect }) {
   return (
     <>
       <section className={`panel restrictions-debts-panel ${activeDebts.length > 0 ? "has-debts" : ""}`}>
-        <div className="panel-header red">RESTRICOES</div>
+        <div className="panel-header red">Restrições</div>
         <div className="restriction-actions">
           {restrictionFilters.map((filter) => (
             <button key={filter} type="button" onClick={() => setActiveFilter(filter)}>

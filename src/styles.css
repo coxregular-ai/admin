@@ -515,8 +515,13 @@ select {
 
 .panel-header {
   color: #fff;
-  font-size: 12px;
+  font-family: inherit;
+  font-size: clamp(14px, 1.15vw, 17px);
+  font-weight: 800;
+  line-height: 1.2;
   padding: 8px 10px 4px;
+  text-transform: none;
+  overflow-wrap: anywhere;
 }
 
 .centered {
@@ -611,7 +616,11 @@ select {
 .info-box h3 {
   margin: 0 0 4px;
   color: #fff;
-  font-size: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: none;
 }
 
 .right-stack {
