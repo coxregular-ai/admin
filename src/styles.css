@@ -755,7 +755,7 @@ select {
   justify-content: center;
   gap: clamp(5px, 0.5vw, 8px);
   padding: 0 10px;
-  transform: translateY(-8px);
+  transform: translateY(-13px);
   width: 100%;
 }
 
