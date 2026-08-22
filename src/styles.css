@@ -116,7 +116,7 @@ select {
 .app-header {
   grid-column: 1 / -1;
   grid-row: 1;
-  min-height: 88px;
+  height: 88px;
   border-bottom: 1px solid #24415f;
   background: #050d1b;
   display: flex;
@@ -128,15 +128,18 @@ select {
 .header-logo-slot {
   width: 224px;
   height: 72px;
+  flex: 0 0 224px;
   border: 0;
   border-radius: 0;
   background: transparent;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #6f86a2;
   font-size: 11px;
   font-weight: 700;
   overflow: hidden;
+  line-height: 0;
 }
 
 .restricted-title {
@@ -170,8 +173,8 @@ select {
 }
 
 .header-logo-slot img {
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   object-position: center center;
   display: block;
@@ -758,16 +761,18 @@ select {
   border: 1px dashed #355579;
   border-radius: 4px;
   background: #020817;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #9fb3c8;
   overflow: hidden;
 }
 
 .logo-upload-preview img {
-  max-width: 100%;
+  width: 100%;
   max-height: 120px;
   object-fit: contain;
+  object-position: center center;
 }
 
 .logo-uploader input[type="file"] {
