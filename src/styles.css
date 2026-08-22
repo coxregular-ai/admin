@@ -338,10 +338,6 @@ select {
   font-size: 11px;
 }
 
-.debt-category-picker .field {
-  gap: 4px;
-}
-
 .type-menu {
   position: relative;
   display: flex;
@@ -992,13 +988,6 @@ select {
 .restriction-popup-row small {
   color: #9fb3c8;
   font-size: 12px;
-}
-
-.restriction-popup-row em {
-  color: #fff;
-  font-style: normal;
-  font-weight: 800;
-  white-space: nowrap;
 }
 
 .restriction-empty {
