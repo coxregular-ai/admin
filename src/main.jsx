@@ -515,7 +515,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
   const indicators = data.indicators;
   const credits = data.credits;
   const settings = data.settings || { logoUrl: "", platformName: "Scoore Admin" };
-  const [newDebt, setNewDebt] = useState({ title: "", amount: "", creditor: "", dueDate: "", status: "Aberta", details: "" });
+  const [newDebtsText, setNewDebtsText] = useState("");
   const [pendingAction, setPendingAction] = useState("");
 
   async function runAction(actionId, action) {
@@ -555,10 +555,23 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
 
   async function addDebt() {
     await runAction("addDebt", async () => {
-      const debt = await api(`/admin/profiles/${profileId}/debts`, { method: "POST", body: JSON.stringify(newDebt) }, token);
-      setData((prev) => ({ ...prev, debts: [debt, ...(prev.debts || [])] }));
-      setNewDebt({ title: "", amount: "", creditor: "", dueDate: "", status: "Aberta", details: "" });
-      toast("Divida adicionada");
+      const lines = newDebtsText.split("\n").map((line) => line.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        toast("Informe ao menos uma divida");
+        return;
+      }
+      const debts = [];
+      for (const title of lines) {
+        const debt = await api(`/admin/profiles/${profileId}/debts`, {
+          method: "POST",
+          body: JSON.stringify({ title, amount: "R$ 0,00", creditor: "", dueDate: "", status: "Aberta", details: "" })
+        }, token);
+        debts.push(debt);
+      }
+      setData((prev) => ({ ...prev, debts: [...debts, ...(prev.debts || [])] }));
+      setPanelData((prev) => prev ? { ...prev, debts: [...debts, ...(prev.debts || [])] } : prev);
+      setNewDebtsText("");
+      toast(debts.length === 1 ? "Divida adicionada" : "Dividas adicionadas");
     });
   }
 
@@ -728,14 +741,17 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
       )}
       {current === "debts" && (
         <div className="editor-stack">
-          <div className="form-grid">
-            <Field label="Titulo" value={newDebt.title} onChange={(value) => setNewDebt((prev) => ({ ...prev, title: value }))} />
-            <Field label="Valor" value={newDebt.amount} onChange={(value) => setNewDebt((prev) => ({ ...prev, amount: value }))} />
-            <Field label="Credor" value={newDebt.creditor} onChange={(value) => setNewDebt((prev) => ({ ...prev, creditor: value }))} />
-            <DateField label="Vencimento" value={newDebt.dueDate} onChange={(value) => setNewDebt((prev) => ({ ...prev, dueDate: value }))} />
-            <SelectField label="Status" value={newDebt.status} options={debtStatusOptions} onChange={(value) => setNewDebt((prev) => ({ ...prev, status: value }))} />
-            <TextArea label="Detalhes do popup" value={newDebt.details} onChange={(value) => setNewDebt((prev) => ({ ...prev, details: value }))} />
-            <button className={`primary-button ${isPending("addDebt") ? "action-busy" : ""}`} type="button" onClick={addDebt} disabled={disableActions}><BadgeDollarSign size={15} /> {isPending("addDebt") ? "Adicionando..." : "Adicionar divida"}</button>
+          <div className="single-field-editor">
+            <TextArea
+              label="Dividas (uma linha por divida)"
+              value={newDebtsText}
+              onChange={setNewDebtsText}
+            />
+            <div className="action-row">
+              <button className={`primary-button ${isPending("addDebt") ? "action-busy" : ""}`} type="button" onClick={addDebt} disabled={disableActions}>
+                <BadgeDollarSign size={15} /> {isPending("addDebt") ? "Adicionando..." : "Adicionar dividas"}
+              </button>
+            </div>
           </div>
           <div className="admin-debt-list">
             <strong>Dividas adicionadas</strong>

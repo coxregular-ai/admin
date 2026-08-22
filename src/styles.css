@@ -311,6 +311,16 @@ select {
   max-width: 1120px;
 }
 
+.single-field-editor {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+}
+
+.single-field-editor .field textarea {
+  min-height: 150px;
+}
+
 .list-editor {
   border: 1px solid #24415f;
   border-radius: 4px;
