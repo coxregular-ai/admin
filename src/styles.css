@@ -127,9 +127,9 @@ select {
 }
 
 .header-logo-slot {
-  width: 300px;
-  height: 88px;
-  flex: 0 0 300px;
+  width: 264px;
+  height: 80px;
+  flex: 0 0 264px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -156,6 +156,7 @@ select {
 
 .header-credentials {
   margin-left: auto;
+  margin-right: auto;
   display: flex;
   align-items: flex-end;
   gap: 10px;
@@ -185,10 +186,6 @@ select {
   font-size: 11px;
 }
 
-.header-credentials input::placeholder {
-  color: #55708f;
-}
-
 .header-credentials input:focus {
   outline: none;
   border-color: #0f62fe;
@@ -211,7 +208,7 @@ select {
 }
 
 .logout-button {
-  margin-left: 0;
+  margin-left: auto;
   min-height: 32px;
   border: 1px solid #24415f;
   border-radius: 4px;
@@ -978,6 +975,7 @@ select {
 
   .header-credentials {
     margin-left: auto;
+    margin-right: auto;
   }
 
   .sidebar {
@@ -1081,6 +1079,7 @@ select {
 
   .header-credentials {
     margin-left: 0;
+    margin-right: 0;
     flex-wrap: wrap;
   }
 

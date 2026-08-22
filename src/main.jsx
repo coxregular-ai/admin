@@ -209,15 +209,15 @@ function Header({ settings, onLogout }) {
       <div className="header-credentials">
         <label>
           <span>Credencial digital</span>
-          <input type="text" placeholder="Credencial" autoComplete="off" />
+          <input type="text" autoComplete="off" />
         </label>
         <label>
           <span>PIN</span>
-          <input type="password" placeholder="PIN" autoComplete="off" />
+          <input type="password" autoComplete="off" />
         </label>
         <label>
           <span>Senha</span>
-          <input type="password" placeholder="Senha" autoComplete="off" />
+          <input type="password" autoComplete="off" />
         </label>
         <button type="button" className="credentials-go">Ir</button>
       </div>
