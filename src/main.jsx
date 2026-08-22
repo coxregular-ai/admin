@@ -27,14 +27,15 @@ const API_URL = import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_
 const profileId = "demo-profile";
 
 const menuItems = [
-  { id: "panel", label: "Painel Principal", icon: Home },
-  { id: "registration", label: "Dados cadastrais", icon: CircleUserRound },
-  { id: "contact", label: "Dados de contato", icon: Phone },
-  { id: "address", label: "Endereco", icon: MapPin },
-  { id: "charts", label: "Graficos", icon: BarChart3 },
-  { id: "debts", label: "Dividas", icon: ShieldAlert },
-  { id: "credits", label: "Creditos", icon: CreditCard },
-  { id: "settings", label: "Configuracao", icon: Settings }
+  { id: "panel", label: "PAINEL RESTRITO", icon: Home },
+  { id: "registration", label: "DADOS CADASTRAIS", icon: CircleUserRound },
+  { id: "contact", label: "CONTATO", icon: Phone },
+  { id: "address", label: "ENDEREÇO", icon: MapPin },
+  { id: "charts", label: "SCORE", icon: BarChart3 },
+  { id: "rating", label: "RATING", icon: BarChart3 },
+  { id: "debts", label: "RESTRIÇÕES", icon: ShieldAlert },
+  { id: "credits", label: "LINHA DE CRÉDITO", icon: CreditCard },
+  { id: "settings", label: "CONFIGURAÇÃO", icon: Settings }
 ];
 
 function moneyColor(index) {
@@ -751,7 +752,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
           </div>
         </div>
       )}
-      {current === "charts" && (
+      {(current === "charts" || current === "rating") && (
         <div className="form-grid">
           <Field label="Score" type="number" min="0" max="1000" value={indicators.score} onChange={(value) => updateIndicatorState("score", value)} />
           <Field label="Score maximo" type="number" value={1000} readOnly onChange={() => {}} />
