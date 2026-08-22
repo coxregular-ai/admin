@@ -5,6 +5,7 @@ import {
   BarChart3,
   CircleUserRound,
   CreditCard,
+  LogOut,
   Home,
   ImageUp,
   KeyRound,
@@ -195,7 +196,7 @@ function Sidebar({ current, setCurrent }) {
   );
 }
 
-function Header({ settings }) {
+function Header({ settings, onLogout }) {
   const logoUrl = settings?.logoUrl;
   return (
     <header className="app-header">
@@ -206,6 +207,9 @@ function Header({ settings }) {
         <LockKeyhole size={15} />
         <strong>Acesso restrito</strong>
       </div>
+      <button type="button" className="logout-button" onClick={onLogout}>
+        <LogOut size={15} /> Sair
+      </button>
     </header>
   );
 }
@@ -734,6 +738,15 @@ function App() {
     setData(panel);
   }
 
+  function logout() {
+    setSession(null);
+    setData(null);
+    setPanelData(null);
+    setSelectedDebt(null);
+    setCurrent("panel");
+    setToastMessage("");
+  }
+
   useEffect(() => {
     refresh();
   }, [token]);
@@ -751,7 +764,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      <Header settings={data.settings} />
+      <Header settings={data.settings} onLogout={logout} />
       <Sidebar current={current} setCurrent={setCurrent} />
       <div className="workspace">
         {current === "panel" ? (
