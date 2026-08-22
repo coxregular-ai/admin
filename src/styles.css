@@ -1108,7 +1108,70 @@ select {
 }
 
 .settings-editor {
-  max-width: 520px;
+  max-width: 760px;
+}
+
+.snapshot-manager {
+  border: 1px solid #24415f;
+  border-radius: 4px;
+  background: #050d1b;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.snapshot-manager > strong {
+  color: #fff;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.snapshot-save-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.snapshot-list {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.snapshot-row {
+  border: 1px solid #24415f;
+  border-radius: 4px;
+  background: #061225;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+}
+
+.snapshot-row > div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.snapshot-row strong {
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snapshot-row span {
+  color: #9fb3c8;
+  font-size: 12px;
+}
+
+.snapshot-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .profile-photo-uploader {

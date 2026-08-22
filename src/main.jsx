@@ -25,7 +25,6 @@ import "./styles.css";
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const profileId = "demo-profile";
-const pageSnapshotKey = `scoore-admin-page-snapshot:${profileId}`;
 
 const menuItems = [
   { id: "panel", label: "PAINEL RESTRITO", icon: Home },
@@ -72,27 +71,6 @@ const ratingOptions = ratingScale.map((item) => item.label);
 const resolutionReasons = ["Quitacao", "Acordo", "Erro cadastral", "Duplicidade"];
 const resolutionSuccessMessage = "RESTRIÇÃO EXCLUÍDA";
 
-function readPageSnapshot() {
-  try {
-    const rawSnapshot = window.localStorage.getItem(pageSnapshotKey);
-    return rawSnapshot ? JSON.parse(rawSnapshot) : null;
-  } catch {
-    return null;
-  }
-}
-
-function clearPageSnapshot() {
-  try {
-    window.localStorage.removeItem(pageSnapshotKey);
-  } catch {
-    // localStorage pode estar indisponivel em modos restritos do navegador.
-  }
-}
-
-function writePageSnapshot(snapshot) {
-  window.localStorage.setItem(pageSnapshotKey, JSON.stringify(snapshot));
-}
-
 function toInputDate(value) {
   if (!value) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -104,6 +82,19 @@ function fromInputDate(value) {
   if (!value) return "";
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
+}
+
+function formatSnapshotDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
 function scoreLabelFor(score) {
@@ -539,7 +530,20 @@ function activeDebtsOnly(debts = []) {
   return debts.filter((debt) => !inactiveDebtStatuses.includes(debt.status));
 }
 
-function Editor({ current, data, setData, setPanelData, token, refresh, toast, onDebtSelect, onSavePageSnapshot }) {
+function Editor({
+  current,
+  data,
+  setData,
+  setPanelData,
+  token,
+  refresh,
+  toast,
+  onDebtSelect,
+  snapshots,
+  onCreateSnapshot,
+  onLoadSnapshot,
+  onDeleteSnapshot
+}) {
   const profile = data.profile;
   const contacts = data.contacts;
   const indicators = data.indicators;
@@ -549,6 +553,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
   const [newDebtCategory, setNewDebtCategory] = useState(restrictionFilters[0]);
   const [editingDebtId, setEditingDebtId] = useState("");
   const [pendingAction, setPendingAction] = useState("");
+  const [snapshotName, setSnapshotName] = useState("");
   const editingDebt = (data.debts || []).find((debt) => debt.id === editingDebtId);
 
   async function runAction(actionId, action) {
@@ -638,6 +643,25 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
     await runAction("settings", async () => {
       await api(`/admin/profiles/${profileId}/settings`, { method: "PATCH", body: JSON.stringify(settings) }, token);
       toast("Configuracao salva");
+    });
+  }
+
+  async function createSnapshotVersion() {
+    await runAction("snapshot-save", async () => {
+      await onCreateSnapshot(snapshotName);
+      setSnapshotName("");
+    });
+  }
+
+  async function loadSnapshotVersion(snapshotId) {
+    await runAction(`snapshot-load-${snapshotId}`, async () => {
+      await onLoadSnapshot(snapshotId);
+    });
+  }
+
+  async function deleteSnapshotVersion(snapshotId) {
+    await runAction(`snapshot-delete-${snapshotId}`, async () => {
+      await onDeleteSnapshot(snapshotId);
     });
   }
 
@@ -904,9 +928,52 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
           <div className="action-row">
             <button className="secondary-button" type="button" onClick={() => setData((prev) => ({ ...prev, settings: { ...(prev.settings || {}), logoUrl: "" } }))} disabled={disableActions}>Remover logo</button>
             <button className={`primary-button ${isPending("settings") ? "action-busy" : ""}`} type="button" onClick={saveSettings} disabled={disableActions}><Save size={15} /> {isPending("settings") ? "Salvando..." : "Salvar configuracao"}</button>
-            <button className="secondary-button" type="button" onClick={onSavePageSnapshot} disabled={disableActions}>
-              <Save size={15} /> Salvar tela e recarregar
-            </button>
+          </div>
+          <div className="snapshot-manager">
+            <strong>Versoes salvas</strong>
+            <div className="snapshot-save-row">
+              <Field label="Nome da versao" value={snapshotName} onChange={setSnapshotName} />
+              <button
+                className={`primary-button ${isPending("snapshot-save") ? "action-busy" : ""}`}
+                type="button"
+                onClick={createSnapshotVersion}
+                disabled={disableActions}
+              >
+                <Save size={15} /> {isPending("snapshot-save") ? "Salvando..." : "Salvar versao"}
+              </button>
+            </div>
+            {snapshots.length === 0 ? (
+              <p className="muted compact-muted">Nenhuma versao salva.</p>
+            ) : (
+              <div className="snapshot-list">
+                {snapshots.map((snapshot) => (
+                  <div className="snapshot-row" key={snapshot.id}>
+                    <div>
+                      <strong>{snapshot.name}</strong>
+                      <span>{formatSnapshotDate(snapshot.createdAt)}</span>
+                    </div>
+                    <div className="snapshot-actions">
+                      <button
+                        className="secondary-button compact"
+                        type="button"
+                        onClick={() => loadSnapshotVersion(snapshot.id)}
+                        disabled={disableActions}
+                      >
+                        {isPending(`snapshot-load-${snapshot.id}`) ? "Carregando..." : "Carregar"}
+                      </button>
+                      <button
+                        className="danger-button compact"
+                        type="button"
+                        onClick={() => deleteSnapshotVersion(snapshot.id)}
+                        disabled={disableActions}
+                      >
+                        {isPending(`snapshot-delete-${snapshot.id}`) ? "Excluindo..." : "Excluir"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1025,6 +1092,7 @@ function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [selectedDebt, setSelectedDebt] = useState(null);
+  const [snapshots, setSnapshots] = useState([]);
 
   const token = session?.accessToken;
   const toast = (message) => {
@@ -1037,20 +1105,17 @@ function App() {
     setRefreshing(true);
     try {
       const panel = await api(`/panel/${profileId}`, {}, token);
-      const snapshot = readPageSnapshot();
-      if (snapshot?.profileId === profileId && snapshot?.data) {
-        setData(snapshot.data);
-        setPanelData(snapshot.panelData || snapshot.data);
-        setCurrent(snapshot.current || "panel");
-        clearPageSnapshot();
-        toast("Informacoes restauradas");
-      } else {
-        setData(panel);
-        setPanelData(panel);
-      }
+      setData(panel);
+      setPanelData(panel);
     } finally {
       setRefreshing(false);
     }
+  }
+
+  async function refreshSnapshots() {
+    if (!token) return;
+    const list = await api(`/admin/profiles/${profileId}/snapshots`, {}, token);
+    setSnapshots(list);
   }
 
   async function refreshDraftOnly() {
@@ -1064,30 +1129,48 @@ function App() {
     setSession(null);
     setData(null);
     setPanelData(null);
+    setSnapshots([]);
     setSelectedDebt(null);
     setCurrent("panel");
     setToastMessage("");
   }
 
-  function savePageSnapshot() {
-    if (!data) return;
-    try {
-      writePageSnapshot({
-        profileId,
-        savedAt: new Date().toISOString(),
-        current,
-        data,
-        panelData: panelData || data
-      });
-      toast("Tela salva. Recarregando...");
-      window.setTimeout(() => window.location.reload(), 450);
-    } catch {
-      toast("Nao foi possivel salvar a tela");
+  async function createSnapshot(name) {
+    const cleanName = String(name || "").trim();
+    if (!cleanName) {
+      toast("Informe o nome da versao");
+      return;
     }
+    const snapshot = await api(`/admin/profiles/${profileId}/snapshots`, {
+      method: "POST",
+      body: JSON.stringify({ name: cleanName })
+    }, token);
+    setSnapshots((prev) => [snapshot, ...prev]);
+    toast("Versao salva");
+  }
+
+  async function loadSnapshot(snapshotId) {
+    const restoredPanel = await api(`/admin/profiles/${profileId}/snapshots/${snapshotId}/load`, {
+      method: "POST"
+    }, token);
+    setData(restoredPanel);
+    setPanelData(restoredPanel);
+    setCurrent("panel");
+    await refreshSnapshots();
+    toast("Versao carregada");
+  }
+
+  async function deleteSnapshot(snapshotId) {
+    await api(`/admin/profiles/${profileId}/snapshots/${snapshotId}`, {
+      method: "DELETE"
+    }, token);
+    setSnapshots((prev) => prev.filter((snapshot) => snapshot.id !== snapshotId));
+    toast("Versao excluida");
   }
 
   useEffect(() => {
     refresh();
+    refreshSnapshots();
   }, [token]);
 
   useEffect(() => {
@@ -1109,7 +1192,20 @@ function App() {
         {current === "panel" ? (
           <Preview data={panelData} onRefresh={refresh} refreshing={refreshing} onDebtSelect={setSelectedDebt} />
         ) : (
-          <Editor current={current} data={data} setData={setData} setPanelData={setPanelData} token={token} refresh={refresh} toast={toast} onDebtSelect={setSelectedDebt} onSavePageSnapshot={savePageSnapshot} />
+          <Editor
+            current={current}
+            data={data}
+            setData={setData}
+            setPanelData={setPanelData}
+            token={token}
+            refresh={refresh}
+            toast={toast}
+            onDebtSelect={setSelectedDebt}
+            snapshots={snapshots}
+            onCreateSnapshot={createSnapshot}
+            onLoadSnapshot={loadSnapshot}
+            onDeleteSnapshot={deleteSnapshot}
+          />
         )}
       </div>
       {toastMessage && <div className="toast">{toastMessage}</div>}
