@@ -520,7 +520,7 @@ select {
   font-weight: 800;
   line-height: 1.2;
   padding: 8px 10px 4px;
-  text-transform: none;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 
@@ -721,9 +721,13 @@ select {
 
 .green-label {
   color: #00c853;
-  font-size: 10px;
+  font-family: inherit;
+  font-size: clamp(10px, 0.8vw, 12px);
+  font-weight: 800;
+  line-height: 1.15;
   margin: 0;
   text-align: center;
+  text-transform: uppercase;
 }
 
 .score-status-label,
