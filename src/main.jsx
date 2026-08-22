@@ -25,6 +25,7 @@ import "./styles.css";
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const profileId = "demo-profile";
+const pageSnapshotKey = `scoore-admin-page-snapshot:${profileId}`;
 
 const menuItems = [
   { id: "panel", label: "PAINEL RESTRITO", icon: Home },
@@ -70,6 +71,27 @@ const debtStatusOptions = ["Aberta", "Em negociacao", "Quitada", "Vencida", "Con
 const ratingOptions = ratingScale.map((item) => item.label);
 const resolutionReasons = ["Quitacao", "Acordo", "Erro cadastral", "Duplicidade"];
 const resolutionSuccessMessage = "RESTRIÇÃO EXCLUÍDA";
+
+function readPageSnapshot() {
+  try {
+    const rawSnapshot = window.localStorage.getItem(pageSnapshotKey);
+    return rawSnapshot ? JSON.parse(rawSnapshot) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearPageSnapshot() {
+  try {
+    window.localStorage.removeItem(pageSnapshotKey);
+  } catch {
+    // localStorage pode estar indisponivel em modos restritos do navegador.
+  }
+}
+
+function writePageSnapshot(snapshot) {
+  window.localStorage.setItem(pageSnapshotKey, JSON.stringify(snapshot));
+}
 
 function toInputDate(value) {
   if (!value) return "";
@@ -517,7 +539,7 @@ function activeDebtsOnly(debts = []) {
   return debts.filter((debt) => !inactiveDebtStatuses.includes(debt.status));
 }
 
-function Editor({ current, data, setData, setPanelData, token, refresh, toast, onDebtSelect }) {
+function Editor({ current, data, setData, setPanelData, token, refresh, toast, onDebtSelect, onSavePageSnapshot }) {
   const profile = data.profile;
   const contacts = data.contacts;
   const indicators = data.indicators;
@@ -882,6 +904,9 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
           <div className="action-row">
             <button className="secondary-button" type="button" onClick={() => setData((prev) => ({ ...prev, settings: { ...(prev.settings || {}), logoUrl: "" } }))} disabled={disableActions}>Remover logo</button>
             <button className={`primary-button ${isPending("settings") ? "action-busy" : ""}`} type="button" onClick={saveSettings} disabled={disableActions}><Save size={15} /> {isPending("settings") ? "Salvando..." : "Salvar configuracao"}</button>
+            <button className="secondary-button" type="button" onClick={onSavePageSnapshot} disabled={disableActions}>
+              <Save size={15} /> Salvar tela e recarregar
+            </button>
           </div>
         </div>
       )}
@@ -1012,8 +1037,17 @@ function App() {
     setRefreshing(true);
     try {
       const panel = await api(`/panel/${profileId}`, {}, token);
-      setData(panel);
-      setPanelData(panel);
+      const snapshot = readPageSnapshot();
+      if (snapshot?.profileId === profileId && snapshot?.data) {
+        setData(snapshot.data);
+        setPanelData(snapshot.panelData || snapshot.data);
+        setCurrent(snapshot.current || "panel");
+        clearPageSnapshot();
+        toast("Informacoes restauradas");
+      } else {
+        setData(panel);
+        setPanelData(panel);
+      }
     } finally {
       setRefreshing(false);
     }
@@ -1033,6 +1067,23 @@ function App() {
     setSelectedDebt(null);
     setCurrent("panel");
     setToastMessage("");
+  }
+
+  function savePageSnapshot() {
+    if (!data) return;
+    try {
+      writePageSnapshot({
+        profileId,
+        savedAt: new Date().toISOString(),
+        current,
+        data,
+        panelData: panelData || data
+      });
+      toast("Tela salva. Recarregando...");
+      window.setTimeout(() => window.location.reload(), 450);
+    } catch {
+      toast("Nao foi possivel salvar a tela");
+    }
   }
 
   useEffect(() => {
@@ -1058,7 +1109,7 @@ function App() {
         {current === "panel" ? (
           <Preview data={panelData} onRefresh={refresh} refreshing={refreshing} onDebtSelect={setSelectedDebt} />
         ) : (
-          <Editor current={current} data={data} setData={setData} setPanelData={setPanelData} token={token} refresh={refresh} toast={toast} onDebtSelect={setSelectedDebt} />
+          <Editor current={current} data={data} setData={setData} setPanelData={setPanelData} token={token} refresh={refresh} toast={toast} onDebtSelect={setSelectedDebt} onSavePageSnapshot={savePageSnapshot} />
         )}
       </div>
       {toastMessage && <div className="toast">{toastMessage}</div>}
