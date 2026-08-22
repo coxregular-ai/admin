@@ -498,7 +498,7 @@ function Preview({ data, onRefresh, refreshing, onDebtSelect }) {
   return (
     <div className={`preview-wrap ${refreshing ? "is-refreshing" : ""}`}>
       <div className="scoreboard">
-        {refreshing && <div className="refresh-overlay">Atualizando sistema</div>}
+        {refreshing && <div className="refresh-overlay">ATUALIZANDO SISTEMA</div>}
         <DataPanel data={data} onRefresh={onRefresh} refreshing={refreshing} />
         <div className="right-stack">
           <ScorePanel indicators={data.indicators} />
