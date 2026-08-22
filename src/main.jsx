@@ -148,6 +148,31 @@ function TextArea({ label, value, onChange }) {
   );
 }
 
+function fileToProfilePhotoUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Erro ao ler imagem"));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("Imagem invalida"));
+      image.onload = () => {
+        const maxSide = 520;
+        const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.86));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -560,15 +585,18 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
     reader.readAsDataURL(file);
   }
 
-  function uploadProfilePhoto(file) {
+  async function uploadProfilePhoto(file) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const photoUrl = reader.result;
+    await runAction("profilePhoto", async () => {
+      const photoUrl = await fileToProfilePhotoUrl(file);
+      const nextProfile = { ...profile, photoUrl };
       setData((prev) => ({ ...prev, profile: { ...prev.profile, photoUrl } }));
       setPanelData((prev) => prev ? { ...prev, profile: { ...prev.profile, photoUrl } } : prev);
-    };
-    reader.readAsDataURL(file);
+      const savedProfile = await api(`/admin/profiles/${profileId}`, { method: "PATCH", body: JSON.stringify(nextProfile) }, token);
+      setData((prev) => ({ ...prev, profile: { ...prev.profile, ...savedProfile } }));
+      setPanelData((prev) => prev ? { ...prev, profile: { ...prev.profile, ...savedProfile } } : prev);
+      toast("Foto salva");
+    });
   }
 
   const updateProfileState = (field, value) => setData((prev) => ({ ...prev, profile: { ...prev.profile, [field]: value } }));
