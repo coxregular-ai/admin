@@ -455,7 +455,6 @@ function RestrictionsDebtsPanel({ debts, onSelect }) {
                   <button key={debt.id} type="button" onClick={() => openDebtDetails(debt)} className="restriction-popup-row">
                     <span>
                       <strong>{debt.title}</strong>
-                      <small>{debt.creditor || "Credor nao informado"} {debt.dueDate ? `- ${debt.dueDate}` : ""}</small>
                     </span>
                   </button>
                 ))}
@@ -922,7 +921,6 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
         ) : !credentialReason ? (
           <>
             <h2>{debt.title}</h2>
-            <p><strong>Credor:</strong> {debt.creditor}</p>
             <p><strong>Vencimento:</strong> {debt.dueDate}</p>
             <p><strong>Status:</strong> {debt.status}</p>
             <p>{debt.details}</p>

@@ -985,11 +985,6 @@ select {
   overflow-wrap: anywhere;
 }
 
-.restriction-popup-row small {
-  color: #9fb3c8;
-  font-size: 12px;
-}
-
 .restriction-empty {
   min-height: 180px;
   border: 1px solid #24415f;
