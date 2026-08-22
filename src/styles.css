@@ -985,6 +985,11 @@ select {
   overflow-wrap: anywhere;
 }
 
+.restriction-popup-row small,
+.restriction-popup-row em {
+  display: none !important;
+}
+
 .restriction-empty {
   min-height: 180px;
   border: 1px solid #24415f;

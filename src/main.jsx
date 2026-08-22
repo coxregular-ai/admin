@@ -565,7 +565,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
       for (const title of lines) {
         const debt = await api(`/admin/profiles/${profileId}/debts`, {
           method: "POST",
-          body: JSON.stringify({ title, category: newDebtCategory, amount: "", creditor: "", dueDate: "", status: "Aberta", details: "" })
+          body: JSON.stringify({ title, category: newDebtCategory, amount: "", dueDate: "", status: "Aberta", details: "" })
         }, token);
         debts.push(debt);
       }
@@ -809,7 +809,6 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
             <div className="form-grid">
               <Field label="Titulo" value={editingDebt.title} onChange={(value) => updateDebtItem(editingDebt.id, { title: value })} />
               <SelectField label="Tipo" value={editingDebt.category || restrictionFilters[0]} options={restrictionFilters} onChange={(value) => updateDebtItem(editingDebt.id, { category: value })} />
-              <Field label="Credor" value={editingDebt.creditor} onChange={(value) => updateDebtItem(editingDebt.id, { creditor: value })} />
               <DateField label="Vencimento" value={editingDebt.dueDate} onChange={(value) => updateDebtItem(editingDebt.id, { dueDate: value })} />
               <SelectField label="Status" value={editingDebt.status} options={debtStatusOptions} onChange={(value) => updateDebtItem(editingDebt.id, { status: value })} />
               <TextArea label="Detalhes do popup" value={editingDebt.details} onChange={(value) => updateDebtItem(editingDebt.id, { details: value })} />
