@@ -522,6 +522,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
   const settings = data.settings || { logoUrl: "", platformName: "Scoore Admin" };
   const [newDebtsText, setNewDebtsText] = useState("");
   const [newDebtCategory, setNewDebtCategory] = useState(restrictionFilters[0]);
+  const [newDebtAmount, setNewDebtAmount] = useState("R$ 0,00");
   const [editingDebtId, setEditingDebtId] = useState("");
   const [pendingAction, setPendingAction] = useState("");
   const editingDebt = (data.debts || []).find((debt) => debt.id === editingDebtId);
@@ -572,7 +573,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
       for (const title of lines) {
         const debt = await api(`/admin/profiles/${profileId}/debts`, {
           method: "POST",
-          body: JSON.stringify({ title, category: newDebtCategory, amount: "R$ 0,00", creditor: "", dueDate: "", status: "Aberta", details: "" })
+          body: JSON.stringify({ title, category: newDebtCategory, amount: newDebtAmount || "R$ 0,00", creditor: "", dueDate: "", status: "Aberta", details: "" })
         }, token);
         debts.push(debt);
       }
@@ -772,6 +773,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
                   </select>
                   <ChevronDown size={16} />
                 </label>
+                <Field label="Valor" value={newDebtAmount} onChange={setNewDebtAmount} />
               </div>
             </div>
             <div className="action-row">
