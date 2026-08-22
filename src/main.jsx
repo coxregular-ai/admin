@@ -68,12 +68,7 @@ const educationOptions = [
 const debtStatusOptions = ["Aberta", "Em negociacao", "Quitada", "Vencida", "Contestada"];
 const ratingOptions = ratingScale.map((item) => item.label);
 const resolutionReasons = ["Quitacao", "Acordo", "Erro cadastral", "Duplicidade"];
-const resolutionMessages = {
-  Quitacao: "Dívida quitada com sucesso",
-  Acordo: "Dívida resolvida por acordo",
-  "Erro cadastral": "Dívida excluída por erro cadastral",
-  Duplicidade: "Dívida excluída por duplicidade"
-};
+const resolutionSuccessMessage = "RESTRIÇÃO EXCLUÍDA";
 
 function toInputDate(value) {
   if (!value) return "";
@@ -895,9 +890,8 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
         method: "POST",
         body: JSON.stringify({ reason, credentials: credentialPayload })
       }, token);
-      const message = resolutionMessages[reason] || "Dívida excluída";
-      setSuccessMessage(message);
-      toast(message);
+      setSuccessMessage(resolutionSuccessMessage);
+      toast(resolutionSuccessMessage);
       onResolved(updatedDebt);
       window.setTimeout(onClose, 1400);
     } finally {
