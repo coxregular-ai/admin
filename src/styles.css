@@ -476,14 +476,6 @@ select {
   padding: 10px;
 }
 
-.preview-toolbar {
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #9fb3c8;
-}
-
 .scoreboard {
   position: relative;
   display: grid;
@@ -621,6 +613,12 @@ select {
   font-weight: 800;
   line-height: 1.15;
   text-transform: none;
+}
+
+.data-refresh-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 8px 0;
 }
 
 .right-stack {

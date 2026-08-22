@@ -278,7 +278,7 @@ function addressLines(address = {}) {
   return String(address.fullText || "").split("\n").map((line) => line.trim()).filter(Boolean);
 }
 
-function DataPanel({ data }) {
+function DataPanel({ data, onRefresh, refreshing }) {
   const rows = [
     ["Nome da Mae", data.profile.motherName],
     ["Nome do Pai", data.profile.fatherName],
@@ -322,6 +322,11 @@ function DataPanel({ data }) {
       <InfoBox icon={Phone} title="Telefones" lines={data.contacts.phones} />
       <InfoBox icon={Mail} title="E-mail" lines={data.contacts.emails} />
       <InfoBox icon={MapPin} title="Endereço" lines={addressLines(data.contacts.address)} />
+      <div className="data-refresh-row">
+        <button type="button" onClick={onRefresh} className="primary-button compact" disabled={refreshing}>
+          <RefreshCw size={15} className={refreshing ? "spin" : ""} /> {refreshing ? "Atualizando..." : "Atualizar"}
+        </button>
+      </div>
     </section>
   );
 }
@@ -476,15 +481,9 @@ function RestrictionsDebtsPanel({ debts, onSelect }) {
 function Preview({ data, onRefresh, refreshing, onDebtSelect }) {
   return (
     <div className={`preview-wrap ${refreshing ? "is-refreshing" : ""}`}>
-      <div className="preview-toolbar">
-        <span>Painel principal</span>
-        <button type="button" onClick={onRefresh} className="primary-button compact" disabled={refreshing}>
-          <RefreshCw size={15} className={refreshing ? "spin" : ""} /> {refreshing ? "Atualizando..." : "Atualizar"}
-        </button>
-      </div>
       <div className="scoreboard">
         {refreshing && <div className="refresh-overlay">Atualizando painel...</div>}
-        <DataPanel data={data} />
+        <DataPanel data={data} onRefresh={onRefresh} refreshing={refreshing} />
         <div className="right-stack">
           <ScorePanel indicators={data.indicators} />
           <CreditsPanel credits={data.credits} />
