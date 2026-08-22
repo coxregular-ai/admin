@@ -314,16 +314,16 @@ select {
 .single-field-editor {
   display: grid;
   gap: 10px;
-  max-width: 980px;
+  max-width: 1040px;
 }
 
 .single-field-editor .field textarea {
-  min-height: 150px;
+  min-height: 116px;
 }
 
 .debt-entry-grid {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(220px, 280px);
+  grid-template-columns: minmax(320px, 1fr) 190px;
   gap: 12px;
   align-items: start;
 }
@@ -338,28 +338,36 @@ select {
   font-size: 11px;
 }
 
-.debt-category-picker > div {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+.type-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.debt-category-picker button {
-  min-height: 34px;
+.type-menu select {
+  width: 100%;
+  min-height: 38px;
   border: 1px solid #31577c;
   border-radius: 4px;
-  background: linear-gradient(180deg, #0c2543, #061225);
+  background: #061225;
   color: #f8fafc;
-  font-size: 10px;
+  padding: 0 32px 0 10px;
+  appearance: none;
+  outline: none;
   font-weight: 800;
+  font-size: 11px;
   cursor: pointer;
 }
 
-.debt-category-picker button:hover,
-.debt-category-picker button.active {
+.type-menu svg {
+  position: absolute;
+  right: 9px;
+  color: #7cc4ff;
+  pointer-events: none;
+}
+
+.type-menu:hover select {
   border-color: #0f62fe;
-  background: #0f62fe;
-  color: #fff;
 }
 
 .list-editor {
@@ -1033,6 +1041,53 @@ select {
   margin: 5px 0;
 }
 
+.debt-summary-row {
+  min-height: 54px;
+  border: 1px solid #24415f;
+  border-radius: 4px;
+  background: #050d1b;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+
+.debt-summary-row > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.debt-summary-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.debt-summary-row span {
+  color: #9fb3c8;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.debt-summary-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.debt-edit-modal {
+  width: min(860px, calc(100vw - 24px));
+}
+
+.debt-edit-modal .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .swatch-field input[type="color"] {
   padding: 3px;
 }
@@ -1318,6 +1373,14 @@ select {
 
   .debt-entry-grid {
     grid-template-columns: 1fr;
+  }
+
+  .debt-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .debt-summary-actions {
+    justify-content: flex-start;
   }
 
   .credit-line .field:nth-child(3),

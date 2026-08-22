@@ -3,8 +3,10 @@ import { createRoot } from "react-dom/client";
 import {
   BadgeDollarSign,
   BarChart3,
+  ChevronDown,
   CircleUserRound,
   CreditCard,
+  Edit3,
   LogOut,
   Home,
   ImageUp,
@@ -520,7 +522,9 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
   const settings = data.settings || { logoUrl: "", platformName: "Scoore Admin" };
   const [newDebtsText, setNewDebtsText] = useState("");
   const [newDebtCategory, setNewDebtCategory] = useState(restrictionFilters[0]);
+  const [editingDebtId, setEditingDebtId] = useState("");
   const [pendingAction, setPendingAction] = useState("");
+  const editingDebt = (data.debts || []).find((debt) => debt.id === editingDebtId);
 
   async function runAction(actionId, action) {
     if (pendingAction) return;
@@ -762,18 +766,12 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
               />
               <div className="debt-category-picker">
                 <span>Tipo</span>
-                <div>
-                  {restrictionFilters.map((filter) => (
-                    <button
-                      key={filter}
-                      className={newDebtCategory === filter ? "active" : ""}
-                      type="button"
-                      onClick={() => setNewDebtCategory(filter)}
-                    >
-                      {filter}
-                    </button>
-                  ))}
-                </div>
+                <label className="type-menu">
+                  <select value={newDebtCategory} onChange={(event) => setNewDebtCategory(event.target.value)}>
+                    {restrictionFilters.map((filter) => <option key={filter} value={filter}>{filter}</option>)}
+                  </select>
+                  <ChevronDown size={16} />
+                </label>
               </div>
             </div>
             <div className="action-row">
@@ -788,31 +786,57 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
               <p className="muted compact-muted">Nenhuma divida adicionada.</p>
             ) : (
               activeDebtsOnly(data.debts).map((debt) => (
-                <div className="debt-editor" key={debt.id}>
-                  <div className="form-grid">
-                    <Field label="Titulo" value={debt.title} onChange={(value) => updateDebtItem(debt.id, { title: value })} />
-                    <SelectField label="Tipo" value={debt.category || restrictionFilters[0]} options={restrictionFilters} onChange={(value) => updateDebtItem(debt.id, { category: value })} />
-                    <Field label="Valor" value={debt.amount} onChange={(value) => updateDebtItem(debt.id, { amount: value })} />
-                    <Field label="Credor" value={debt.creditor} onChange={(value) => updateDebtItem(debt.id, { creditor: value })} />
-                    <DateField label="Vencimento" value={debt.dueDate} onChange={(value) => updateDebtItem(debt.id, { dueDate: value })} />
-                    <SelectField label="Status" value={debt.status} options={debtStatusOptions} onChange={(value) => updateDebtItem(debt.id, { status: value })} />
-                    <TextArea label="Detalhes do popup" value={debt.details} onChange={(value) => updateDebtItem(debt.id, { details: value })} />
+                <div className="debt-summary-row" key={debt.id}>
+                  <div>
+                    <strong>{debt.title}</strong>
+                    <span>{debt.category || restrictionFilters[0]} · {debt.status || "Aberta"} · {debt.amount || "R$ 0,00"}</span>
                   </div>
-                  <div className="action-row">
-                    <button className="secondary-button" type="button" onClick={() => onDebtSelect(debt)}>Abrir popup</button>
+                  <div className="debt-summary-actions">
+                    <button className="secondary-button compact" type="button" onClick={() => onDebtSelect(debt)}>Popup</button>
                     <button
-                      className={`primary-button ${isPending(`debt-${debt.id}`) ? "action-busy" : ""}`}
+                      className="primary-button compact"
                       type="button"
-                      onClick={() => saveDebt(debt)}
                       disabled={disableActions}
+                      onClick={() => setEditingDebtId(debt.id)}
                     >
-                      <Save size={15} /> {isPending(`debt-${debt.id}`) ? "Salvando..." : "Salvar divida"}
+                      <Edit3 size={14} /> Editar
                     </button>
                   </div>
                 </div>
               ))
             )}
           </div>
+        </div>
+      )}
+      {editingDebt && (
+        <div className="modal-backdrop" onClick={() => setEditingDebtId("")}>
+          <article className="modal debt-edit-modal" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-close" onClick={() => setEditingDebtId("")}>x</button>
+            <h2>Editar divida</h2>
+            <div className="form-grid">
+              <Field label="Titulo" value={editingDebt.title} onChange={(value) => updateDebtItem(editingDebt.id, { title: value })} />
+              <SelectField label="Tipo" value={editingDebt.category || restrictionFilters[0]} options={restrictionFilters} onChange={(value) => updateDebtItem(editingDebt.id, { category: value })} />
+              <Field label="Valor" value={editingDebt.amount} onChange={(value) => updateDebtItem(editingDebt.id, { amount: value })} />
+              <Field label="Credor" value={editingDebt.creditor} onChange={(value) => updateDebtItem(editingDebt.id, { creditor: value })} />
+              <DateField label="Vencimento" value={editingDebt.dueDate} onChange={(value) => updateDebtItem(editingDebt.id, { dueDate: value })} />
+              <SelectField label="Status" value={editingDebt.status} options={debtStatusOptions} onChange={(value) => updateDebtItem(editingDebt.id, { status: value })} />
+              <TextArea label="Detalhes do popup" value={editingDebt.details} onChange={(value) => updateDebtItem(editingDebt.id, { details: value })} />
+            </div>
+            <div className="modal-actions">
+              <button className="secondary-button" type="button" onClick={() => setEditingDebtId("")}>Cancelar</button>
+              <button
+                className={`primary-button ${isPending(`debt-${editingDebt.id}`) ? "action-busy" : ""}`}
+                type="button"
+                onClick={async () => {
+                  await saveDebt(editingDebt);
+                  setEditingDebtId("");
+                }}
+                disabled={disableActions}
+              >
+                <Save size={15} /> {isPending(`debt-${editingDebt.id}`) ? "Salvando..." : "Salvar divida"}
+              </button>
+            </div>
+          </article>
         </div>
       )}
       {current === "credits" && (
