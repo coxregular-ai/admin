@@ -319,6 +319,21 @@ select {
   opacity: 0.82;
 }
 
+.secondary-button:disabled,
+.success-button:disabled,
+.danger-button:disabled {
+  cursor: wait;
+  opacity: 0.82;
+}
+
+.action-busy,
+.primary-button.action-busy,
+.success-button.action-busy {
+  background: #f59e0b;
+  color: #04111f;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.35), 0 0 18px rgba(245, 158, 11, 0.18);
+}
+
 .secondary-button {
   background: #12345a;
 }

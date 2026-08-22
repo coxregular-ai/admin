@@ -422,37 +422,63 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
   const credits = data.credits;
   const settings = data.settings || { logoUrl: "", platformName: "Scoore Admin" };
   const [newDebt, setNewDebt] = useState({ title: "", amount: "", creditor: "", dueDate: "", status: "Aberta", details: "" });
+  const [pendingAction, setPendingAction] = useState("");
+
+  async function runAction(actionId, action) {
+    if (pendingAction) return;
+    setPendingAction(actionId);
+    try {
+      await action();
+    } finally {
+      setPendingAction("");
+    }
+  }
+
+  const isPending = (actionId) => pendingAction === actionId;
+  const disableActions = Boolean(pendingAction);
 
   async function saveProfile() {
-    await api(`/admin/profiles/${profileId}`, { method: "PATCH", body: JSON.stringify(profile) }, token);
-    toast("Dados cadastrais salvos");
+    await runAction("profile", async () => {
+      await api(`/admin/profiles/${profileId}`, { method: "PATCH", body: JSON.stringify(profile) }, token);
+      toast("Dados cadastrais salvos");
+    });
   }
 
   async function saveContacts() {
-    await api(`/admin/profiles/${profileId}/contacts`, { method: "PATCH", body: JSON.stringify(contacts) }, token);
-    toast("Contato e endereco salvos");
+    await runAction("contacts", async () => {
+      await api(`/admin/profiles/${profileId}/contacts`, { method: "PATCH", body: JSON.stringify(contacts) }, token);
+      toast("Contato e endereco salvos");
+    });
   }
 
   async function saveIndicators() {
-    await api(`/admin/profiles/${profileId}/indicators`, { method: "PATCH", body: JSON.stringify(indicators) }, token);
-    toast("Graficos salvos");
+    await runAction("indicators", async () => {
+      await api(`/admin/profiles/${profileId}/indicators`, { method: "PATCH", body: JSON.stringify(indicators) }, token);
+      toast("Graficos salvos");
+    });
   }
 
   async function addDebt() {
-    const debt = await api(`/admin/profiles/${profileId}/debts`, { method: "POST", body: JSON.stringify(newDebt) }, token);
-    setData((prev) => ({ ...prev, debts: [debt, ...(prev.debts || [])] }));
-    setNewDebt({ title: "", amount: "", creditor: "", dueDate: "", status: "Aberta", details: "" });
-    toast("Divida adicionada");
+    await runAction("addDebt", async () => {
+      const debt = await api(`/admin/profiles/${profileId}/debts`, { method: "POST", body: JSON.stringify(newDebt) }, token);
+      setData((prev) => ({ ...prev, debts: [debt, ...(prev.debts || [])] }));
+      setNewDebt({ title: "", amount: "", creditor: "", dueDate: "", status: "Aberta", details: "" });
+      toast("Divida adicionada");
+    });
   }
 
   async function saveCredits() {
-    await api(`/admin/profiles/${profileId}/credits`, { method: "PATCH", body: JSON.stringify(credits) }, token);
-    toast("Creditos salvos");
+    await runAction("credits", async () => {
+      await api(`/admin/profiles/${profileId}/credits`, { method: "PATCH", body: JSON.stringify(credits) }, token);
+      toast("Creditos salvos");
+    });
   }
 
   async function saveSettings() {
-    await api(`/admin/profiles/${profileId}/settings`, { method: "PATCH", body: JSON.stringify(settings) }, token);
-    toast("Configuracao salva");
+    await runAction("settings", async () => {
+      await api(`/admin/profiles/${profileId}/settings`, { method: "PATCH", body: JSON.stringify(settings) }, token);
+      toast("Configuracao salva");
+    });
   }
 
   function uploadLogo(file) {
@@ -524,14 +550,14 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
           <SelectField label="Status" value={profile.status} options={statusOptions} onChange={(value) => updateProfileState("status", value)} />
           <Field label="Profissao" value={profile.profession} onChange={(value) => updateProfileState("profession", value)} />
           <Field label="Renda" value={profile.income} onChange={(value) => updateProfileState("income", value)} />
-          <button className="primary-button" type="button" onClick={saveProfile}><Save size={15} /> Salvar</button>
+          <button className={`primary-button ${isPending("profile") ? "action-busy" : ""}`} type="button" onClick={saveProfile} disabled={disableActions}><Save size={15} /> {isPending("profile") ? "Salvando..." : "Salvar"}</button>
         </div>
       )}
       {current === "contact" && (
         <div className="editor-stack">
           <ContactListEditor title="Telefones" kind="phones" type="tel" values={contacts.phones} onChange={updateContactItem} onAdd={addContactItem} onRemove={removeContactItem} />
           <ContactListEditor title="E-mails" kind="emails" type="email" values={contacts.emails} onChange={updateContactItem} onAdd={addContactItem} onRemove={removeContactItem} />
-          <button className="primary-button save-row" type="button" onClick={saveContacts}><Save size={15} /> Salvar contatos</button>
+          <button className={`primary-button save-row ${isPending("contacts") ? "action-busy" : ""}`} type="button" onClick={saveContacts} disabled={disableActions}><Save size={15} /> {isPending("contacts") ? "Salvando..." : "Salvar contatos"}</button>
         </div>
       )}
       {current === "address" && (
@@ -539,7 +565,7 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
           {["street", "number", "complement", "district", "city", "state", "zipCode"].map((field) => (
             <Field key={field} label={field} value={contacts.address[field]} onChange={(value) => updateAddressState(field, value)} />
           ))}
-          <button className="primary-button" type="button" onClick={saveContacts}><Save size={15} /> Salvar</button>
+          <button className={`primary-button ${isPending("contacts") ? "action-busy" : ""}`} type="button" onClick={saveContacts} disabled={disableActions}><Save size={15} /> {isPending("contacts") ? "Salvando..." : "Salvar"}</button>
         </div>
       )}
       {current === "charts" && (
@@ -549,7 +575,7 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
           <SelectField label="Rating" value={indicators.rating} options={ratingOptions} onChange={(value) => updateIndicatorState("rating", value)} />
           <Field label="Texto do Rating" value={indicators.ratingLabel} onChange={(value) => updateIndicatorState("ratingLabel", value)} />
           <Field label="Ranking" value={indicators.ranking} onChange={(value) => updateIndicatorState("ranking", value)} />
-          <button className="primary-button" type="button" onClick={saveIndicators}><Save size={15} /> Salvar</button>
+          <button className={`primary-button ${isPending("indicators") ? "action-busy" : ""}`} type="button" onClick={saveIndicators} disabled={disableActions}><Save size={15} /> {isPending("indicators") ? "Salvando..." : "Salvar"}</button>
         </div>
       )}
       {current === "debts" && (
@@ -561,7 +587,7 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
             <DateField label="Vencimento" value={newDebt.dueDate} onChange={(value) => setNewDebt((prev) => ({ ...prev, dueDate: value }))} />
             <SelectField label="Status" value={newDebt.status} options={debtStatusOptions} onChange={(value) => setNewDebt((prev) => ({ ...prev, status: value }))} />
             <TextArea label="Detalhes do popup" value={newDebt.details} onChange={(value) => setNewDebt((prev) => ({ ...prev, details: value }))} />
-            <button className="primary-button" type="button" onClick={addDebt}><BadgeDollarSign size={15} /> Adicionar divida</button>
+            <button className={`primary-button ${isPending("addDebt") ? "action-busy" : ""}`} type="button" onClick={addDebt} disabled={disableActions}><BadgeDollarSign size={15} /> {isPending("addDebt") ? "Adicionando..." : "Adicionar divida"}</button>
           </div>
           <div className="admin-debt-list">
             <strong>Dividas adicionadas</strong>
@@ -597,7 +623,7 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
           </div>
           <div className="action-row">
             <button className="secondary-button" type="button" onClick={addCreditItem}>Adicionar item</button>
-            <button className="primary-button" type="button" onClick={saveCredits}><Save size={15} /> Salvar creditos</button>
+            <button className={`primary-button ${isPending("credits") ? "action-busy" : ""}`} type="button" onClick={saveCredits} disabled={disableActions}><Save size={15} /> {isPending("credits") ? "Salvando..." : "Salvar creditos"}</button>
           </div>
         </div>
       )}
@@ -612,8 +638,8 @@ function Editor({ current, data, setData, token, refresh, toast, onDebtSelect })
             <input type="file" accept="image/*" onChange={(event) => uploadLogo(event.target.files?.[0])} />
           </label>
           <div className="action-row">
-            <button className="secondary-button" type="button" onClick={() => setData((prev) => ({ ...prev, settings: { ...(prev.settings || {}), logoUrl: "" } }))}>Remover logo</button>
-            <button className="primary-button" type="button" onClick={saveSettings}><Save size={15} /> Salvar configuracao</button>
+            <button className="secondary-button" type="button" onClick={() => setData((prev) => ({ ...prev, settings: { ...(prev.settings || {}), logoUrl: "" } }))} disabled={disableActions}>Remover logo</button>
+            <button className={`primary-button ${isPending("settings") ? "action-busy" : ""}`} type="button" onClick={saveSettings} disabled={disableActions}><Save size={15} /> {isPending("settings") ? "Salvando..." : "Salvar configuracao"}</button>
           </div>
         </div>
       )}
@@ -625,16 +651,23 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
   const [showReasons, setShowReasons] = useState(false);
   const [credentialReason, setCredentialReason] = useState("");
   const [credentials, setCredentials] = useState({ login: "", pin: "", password: "" });
+  const [resolving, setResolving] = useState(false);
   if (!debt) return null;
 
   async function resolve(reason, credentialPayload = null) {
-    const updatedDebt = await api(`/admin/debts/${debt.id}/resolve`, {
-      method: "POST",
-      body: JSON.stringify({ reason, credentials: credentialPayload })
-    }, token);
-    toast(reason === "Quitacao" ? "Divida quitada com sucesso" : "Registro atualizado com sucesso");
-    onResolved(updatedDebt);
-    onClose();
+    if (resolving) return;
+    setResolving(true);
+    try {
+      const updatedDebt = await api(`/admin/debts/${debt.id}/resolve`, {
+        method: "POST",
+        body: JSON.stringify({ reason, credentials: credentialPayload })
+      }, token);
+      toast(reason === "Quitacao" ? "Divida quitada com sucesso" : "Registro atualizado com sucesso");
+      onResolved(updatedDebt);
+      onClose();
+    } finally {
+      setResolving(false);
+    }
   }
 
   function submitCredential(event) {
@@ -681,8 +714,8 @@ function DebtModal({ debt, onClose, token, onRefresh, onResolved, toast }) {
             <Field label="PIN" name="resolution_actor_pin" autoComplete="new-password" type="password" value={credentials.pin} onChange={(value) => setCredentials((prev) => ({ ...prev, pin: value }))} />
             <Field label="Senha" name="resolution_actor_proof" autoComplete="new-password" type="password" value={credentials.password} onChange={(value) => setCredentials((prev) => ({ ...prev, password: value }))} />
             <div className="modal-actions">
-              <button className="secondary-button" type="button" onClick={() => setCredentialReason("")}>Voltar</button>
-              <button className="success-button" type="submit">Confirmar</button>
+              <button className="secondary-button" type="button" onClick={() => setCredentialReason("")} disabled={resolving}>Voltar</button>
+              <button className={`success-button ${resolving ? "action-busy" : ""}`} type="submit" disabled={resolving}>{resolving ? "Confirmando..." : "Confirmar"}</button>
             </div>
           </form>
         )}
