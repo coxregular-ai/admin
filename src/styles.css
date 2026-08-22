@@ -864,18 +864,18 @@ select {
 }
 
 .restrictions-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
+  gap: 6px;
+  padding-left: 18px;
+  padding-right: 18px;
 }
 
 .restrictions-header strong {
   color: #00c853;
-  font-size: clamp(11px, 0.9vw, 13px);
-  font-weight: 500;
-  margin-left: auto;
-  margin-right: 28%;
+  font-size: clamp(16px, 1.45vw, 22px);
+  font-weight: 800;
   text-align: center;
   white-space: nowrap;
 }
