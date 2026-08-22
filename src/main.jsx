@@ -206,6 +206,21 @@ function Header({ settings, onLogout }) {
         <LockKeyhole size={15} />
         <strong>Acesso restrito</strong>
       </div>
+      <div className="header-credentials">
+        <label>
+          <span>Credencial digital</span>
+          <input type="text" placeholder="Credencial" autoComplete="off" />
+        </label>
+        <label>
+          <span>PIN</span>
+          <input type="password" placeholder="PIN" autoComplete="off" />
+        </label>
+        <label>
+          <span>Senha</span>
+          <input type="password" placeholder="Senha" autoComplete="off" />
+        </label>
+        <button type="button" className="credentials-go">Ir</button>
+      </div>
       <button type="button" className="logout-button" onClick={onLogout}>
         <LogOut size={15} /> Sair
       </button>
@@ -227,6 +242,8 @@ function DataPanel({ data }) {
     ["Orgao Emissor", data.profile.rgIssuer],
     ["Escolaridade", data.profile.education],
     ["Profissao", data.profile.profession],
+    // celula vazia para empurrar a renda presumida para a coluna da direita
+    [null, null],
     ["Renda presumida", data.profile.income]
   ];
 
@@ -243,9 +260,9 @@ function DataPanel({ data }) {
         <span className="status-pill">{data.profile.status}</span>
       </div>
       <div className="data-grid">
-        {rows.map(([label, value]) => (
-          <React.Fragment key={label}>
-            <strong>{label}:</strong>
+        {rows.map(([label, value], index) => (
+          <React.Fragment key={label || `spacer-${index}`}>
+            <strong>{label ? `${label}:` : ""}</strong>
             <span>{value}</span>
           </React.Fragment>
         ))}
