@@ -1055,9 +1055,10 @@ select {
 }
 
 .debt-summary-row strong {
+  max-height: 58px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .debt-content-text {

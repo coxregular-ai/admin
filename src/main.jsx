@@ -418,7 +418,7 @@ function debtContent(debt = {}) {
 }
 
 function debtSummary(debt = {}) {
-  return debtContent(debt).split("\n").map((line) => line.trim()).find(Boolean) || "Restricao";
+  return debtContent(debt).replace(/\s+/g, " ").trim() || "Restricao";
 }
 
 function RestrictionsDebtsPanel({ debts, onSelect }) {
@@ -575,7 +575,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
       const debt = await api(`/admin/profiles/${profileId}/debts`, {
         method: "POST",
         body: JSON.stringify({
-          title: debtSummary({ content }),
+          title: content,
           content,
           category: newDebtCategory,
           amount: "",
@@ -768,7 +768,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
           <div className="single-field-editor">
             <div className="debt-entry-grid">
               <TextArea
-                label="Conteudo da restricao"
+                label="Conteudo da restricao (todo este campo vira uma unica restricao)"
                 value={newDebtsText}
                 onChange={setNewDebtsText}
               />
@@ -796,7 +796,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
               activeDebtsOnly(data.debts).map((debt) => (
                 <div className="debt-summary-row" key={debt.id}>
                   <div>
-                    <strong>{debtSummary(debt)}</strong>
+                    <strong>{debtContent(debt)}</strong>
                     <span>{debt.category || restrictionFilters[0]} · {debt.status || "Aberta"}</span>
                   </div>
                   <div className="debt-summary-actions">
@@ -825,7 +825,7 @@ function Editor({ current, data, setData, setPanelData, token, refresh, toast, o
               <TextArea
                 label="Conteudo da restricao"
                 value={debtContent(editingDebt)}
-                onChange={(value) => updateDebtItem(editingDebt.id, { content: value, details: value, title: debtSummary({ content: value }) })}
+                onChange={(value) => updateDebtItem(editingDebt.id, { content: value, details: value, title: value })}
               />
               <SelectField label="Tipo" value={editingDebt.category || restrictionFilters[0]} options={restrictionFilters} onChange={(value) => updateDebtItem(editingDebt.id, { category: value })} />
               <SelectField label="Status" value={editingDebt.status} options={debtStatusOptions} onChange={(value) => updateDebtItem(editingDebt.id, { status: value })} />
