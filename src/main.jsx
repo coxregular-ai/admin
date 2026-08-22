@@ -364,8 +364,7 @@ function CreditsPanel({ credits }) {
           {credits.items.map((item, index) => (
             <p key={item.id || item.label}>
               <span style={{ background: item.color || moneyColor(index) }} />
-              {item.label}<br />
-              <small>({item.percentage || 0}%) Utilizado</small>
+              {item.label} <strong>{item.percentage || 0}%</strong>
             </p>
           ))}
         </div>
